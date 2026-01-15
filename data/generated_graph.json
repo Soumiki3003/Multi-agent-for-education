@@ -1,0 +1,3007 @@
+{
+  "id": "CTF_KG",
+  "name": "Central node",
+  "children": [
+    {
+      "id": "C01",
+      "name": "Angr Project Initialization",
+      "label": "Concept 1",
+      "definition": "Understanding how to initialize an Angr project from a binary and create a foundational symbolic state (entry_state) or a blank state for custom execution points.",
+      "difficulty": "beginner",
+      "bloom_level": "Understand",
+      "prerequisites": [],
+      "misconceptions": [
+        "Assuming Angr loads all necessary libraries automatically (use auto_load_libs=False for specific scenarios)",
+        "Confusing 'entry_state' with 'full_init_state' or 'blank_state' when a specific start address is required."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.95,
+      "relevance_score": 0.88,
+      "source": "CTF_copy.pdf [page 7]",
+      "learning_objective": "Load a binary into an Angr project and establish an initial symbolic simulation state.",
+      "connections": [
+        {
+          "to": "C02",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C03",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P01",
+          "name": "Procedural steps: Angr Initialization",
+          "label": "Procedural Steps",
+          "description": "Procedure for initializing an Angr project and creating a symbolic state for analysis.",
+          "difficulty": "beginner",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrect binary path",
+            "Missing required Angr imports",
+            "Choosing the wrong initial state factory method for the task."
+          ],
+          "success_criteria": [
+            "Project object created successfully",
+            "Simulation manager initialized with a valid state"
+          ],
+          "error_patterns": [
+            "FileNotFoundError",
+            "AttributeError: 'Project' object has no attribute 'factory'",
+            "Angr takes too long due to auto-loading libraries."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P01-step1",
+              "name": "Step 1: Import Angr and specify binary path",
+              "label": "Procedural Step 1",
+              "code_snippet": "import angr\npath_to_binary = 'path/to/your/binary'",
+              "hint": "Ensure the Angr library is installed. The path should be a string pointing to the challenge binary.",
+              "children": [
+                {
+                  "id": "P01-step2",
+                  "name": "Step 2: Create an Angr Project",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "project = angr.Project(path_to_binary, auto_load_libs=False)",
+                  "hint": "The 'auto_load_libs=False' parameter can prevent excessive memory usage and speed up project loading, especially for simple binaries.",
+                  "children": [
+                    {
+                      "id": "P01-step3",
+                      "name": "Step 3: Create an initial symbolic state",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "initial_state = project.factory.entry_state()",
+                      "hint": "For starting execution at the binary's entry point, 'entry_state()' is standard. For a specific address, consider 'blank_state(addr=...)'.",
+                      "children": [
+                        {
+                          "id": "P01-step4",
+                          "name": "Step 4: Initialize a simulation manager",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "simulation = project.factory.simgr(initial_state)",
+                          "hint": "The simulation manager orchestrates the exploration of states. It's often abbreviated as 'simgr'.",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A01",
+          "name": "Assessment Guide: Angr Initialization",
+          "label": "Assessment 1",
+          "linked_challenges": [
+            "00_angr_find",
+            "01_angr_avoid",
+            "02_angr_find_condition"
+          ],
+          "objectives": [
+            "Correctly load a binary using angr.Project",
+            "Initialize an appropriate symbolic state for analysis",
+            "Create a simulation manager from the initial state"
+          ],
+          "question_prompts": [
+            {
+              "question": "What is the purpose of `auto_load_libs=False` when creating an Angr project?"
+            },
+            {
+              "question": "Explain the difference between `project.factory.entry_state()` and `project.factory.blank_state(addr=...)`."
+            },
+            {
+              "question": "How would you identify if your Angr project initialization was successful?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Demonstrates correct Angr project creation syntax",
+            "Selects the most suitable state initialization method for a given scenario",
+            "Explains the role of the simulation manager in symbolic execution"
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "beginner",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C02",
+      "name": "Find and Avoid Algorithm using `simgr.explore()`",
+      "label": "Concept 2",
+      "definition": "Understanding the core algorithm for symbolic exploration to find desired program states and avoid undesirable ones, and how Angr's `explore()` method provides a shortcut for this common pattern.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C01"
+      ],
+      "misconceptions": [
+        "Assuming 'find' and 'avoid' automatically map to source code functions (they require addresses or custom functions)",
+        "Mixing instruction addresses with data addresses for targets",
+        "Ignoring potential path explosions if 'avoid' conditions are too broad or 'find' conditions are too narrow."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.92,
+      "relevance_score": 0.9,
+      "source": "CTF_copy.pdf [page 2, 3]",
+      "learning_objective": "Utilize Angr's `explore()` method to guide symbolic execution towards target addresses and away from problematic ones.",
+      "connections": [
+        {
+          "to": "C01",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C03",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C04",
+          "relation": "EXTENDS_TO"
+        }
+      ],
+      "children": [
+        {
+          "id": "P02",
+          "name": "Procedural Steps: Find/Avoid Algorithm with `explore()`",
+          "label": "Procedural Steps",
+          "description": "Procedure for setting up and executing a basic symbolic exploration using Angr's `explore()` method.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrect target addresses (e.g., off-by-one, data address instead of code address)",
+            "Forgetting to check `simulation.found` after exploration",
+            "Not handling the case where no solution is found."
+          ],
+          "success_criteria": [
+            "Simulation successfully identifies a 'found' state",
+            "Input leading to the 'found' state is concretized and printed"
+          ],
+          "error_patterns": [
+            "angr.errors.SimManagerError: No more active states...",
+            "IndexError: list index out of range (if simulation.found is empty)"
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P02-step1",
+              "name": "Step 1: Identify target addresses",
+              "label": "Procedural Step 1",
+              "hint": "Analyze the binary using tools like `objdump` or Ghidra to find the hexadecimal instruction addresses corresponding to success and failure points.",
+              "children": [
+                {
+                  "id": "P02-step2",
+                  "name": "Step 2: Define find and avoid targets",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "print_good_address = 0x804XXXX\nfail_address = 0x804YYYY",
+                  "hint": "These are integer values, often represented in hexadecimal. The `find` address is where you want execution to reach, `avoid` is where you want to prevent execution from going.",
+                  "children": [
+                    {
+                      "id": "P02-step3",
+                      "name": "Step 3: Run symbolic exploration using `explore()`",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "simulation.explore(find=print_good_address, avoid=fail_address)",
+                      "hint": "The `explore` method takes either addresses or functions as `find` and `avoid` parameters. For simple address targets, directly pass the hexadecimal values.",
+                      "children": [
+                        {
+                          "id": "P02-step4",
+                          "name": "Step 4: Check for a found solution and concretize input",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "if simulation.found:\n  solution_state = simulation.found[0]\n  print(solution_state.posix.dumps(sys.stdin.fileno()).decode())\nelse:\n  raise Exception('Could not find the solution')",
+                          "hint": "`simulation.found` is a list of states that met the `find` condition. The `dumps()` method extracts the concrete input from symbolic stdin.",
+                          "children": [
+                            {
+                              "id": "P02-step5",
+                              "name": "Step 5: Review the exploration algorithm",
+                              "label": "Procedural Step 5",
+                              "description": "Understand the internal loop of the 'explore' method: stepping all active states, running 'should_accept_state' and 'should_avoid_state' functions, and terminating matched states to remove from active states.",
+                              "hint": "The 'explore' method automates this iterative process, but knowing its underlying logic helps in debugging and advanced usage.",
+                              "source": "CTF_copy.pdf [page 2]",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A02",
+          "name": "Assessment Guide: Find/Avoid Algorithm with `explore()`",
+          "label": "Assessment 2",
+          "linked_challenges": [
+            "00_angr_find",
+            "01_angr_avoid"
+          ],
+          "objectives": [
+            "Accurately identify success and failure addresses in a binary",
+            "Correctly configure `simgr.explore()` with find and avoid targets",
+            "Extract and decode the concrete input from a found symbolic state"
+          ],
+          "question_prompts": [
+            {
+              "question": "How would you use `objdump` to find the address of a 'Good Job' message's print function call in a binary?"
+            },
+            {
+              "question": "What happens if you only provide a `find` address to `explore()` but not an `avoid` address?"
+            },
+            {
+              "question": "Describe a scenario where `simulation.found` might be empty after `explore()` completes, and what you should do."
+            }
+          ],
+          "evaluation_criteria": [
+            "Provides correct hexadecimal addresses for specific code locations",
+            "Demonstrates proper syntax for `explore()` with multiple arguments",
+            "Explains post-exploration state handling, including error conditions"
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C03",
+      "name": "Solving CTF 00_angr_find (Basic Find Target)",
+      "label": "Concept 3",
+      "definition": "Applying fundamental Angr project initialization and symbolic exploration techniques to solve a basic Capture-The-Flag challenge by finding a specific success address.",
+      "difficulty": "beginner",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C01",
+        "C02"
+      ],
+      "misconceptions": [
+        "Believing 'complex_function' needs to be analyzed manually",
+        "Underestimating the power of symbolic execution for obfuscated simple checks."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.9,
+      "relevance_score": 0.85,
+      "source": "CTF_copy.pdf [page 5, 6, 7]",
+      "learning_objective": "Solve the '00_angr_find' CTF level by setting up Angr to find the address corresponding to a 'Good Job' message.",
+      "connections": [
+        {
+          "to": "C01",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C02",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P03",
+          "name": "Procedural Steps: Solving 00_angr_find",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 00_angr_find CTF challenge, focusing on binary analysis for target addresses and basic Angr `explore` usage.",
+          "difficulty": "beginner",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Failing to locate the correct 'Good Job' print address",
+            "Typos in the Angr script, especially binary path or address."
+          ],
+          "success_criteria": [
+            "Script executes without errors",
+            "Correct input string is printed as a solution"
+          ],
+          "error_patterns": [
+            "'Could not find the solution' exception",
+            "Outputting an incorrect password string."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P03-step1",
+              "name": "Step 1: Analyze binary to find success message address",
+              "label": "Procedural Step 1",
+              "code_snippet": "objdump -d 00_angr_find | grep 'Good Job'",
+              "hint": "Look for the instruction address immediately preceding or at the `call puts` or `call printf` for the success string. The example gives `0x804867a`.",
+              "source": "CTF_copy.pdf [page 6]",
+              "children": [
+                {
+                  "id": "P03-step2",
+                  "name": "Step 2: Populate the `scaffold00.py` template",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "path_to_binary = './00_angr_find'\nprint_good_address = 0x804867a # :integer (probably in hexadecimal)",
+                  "hint": "Fill in the `path_to_binary` and `print_good_address` variables in the provided scaffold script.",
+                  "source": "CTF_copy.pdf [page 7]",
+                  "children": [
+                    {
+                      "id": "P03-step3",
+                      "name": "Step 3: Run the Angr script",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "python scaffold00.py",
+                      "hint": "Execute the Python script to perform symbolic execution and retrieve the solution.",
+                      "source": "CTF_copy.pdf [page 7]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A03",
+          "name": "Assessment Guide: Solving 00_angr_find",
+          "label": "Assessment 3",
+          "linked_challenges": [
+            "00_angr_find"
+          ],
+          "objectives": [
+            "Demonstrate understanding of basic binary analysis for target addresses",
+            "Successfully implement a simple Angr `explore` solution",
+            "Interpret and use Angr template scripts effectively"
+          ],
+          "question_prompts": [
+            {
+              "question": "If the binary structure changed, how would you re-identify the `print_good_address`?"
+            },
+            {
+              "question": "What role does `complex_function` play in making manual analysis difficult but symbolic execution easy for this challenge?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Provides the correct solution string for `00_angr_find`",
+            "Explains the steps taken to find the target address",
+            "Identifies potential pitfalls or alternative approaches for this challenge"
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "beginner",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C04",
+      "name": "Solving CTF 02_angr_find_condition (Conditional Find/Avoid)",
+      "label": "Concept 4",
+      "definition": "Extending `simgr.explore()` by defining custom Python functions (`is_successful` and `should_abort`) to dynamically evaluate states based on arbitrary conditions, such as checking stdout content.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C01",
+        "C02",
+        "C03"
+      ],
+      "misconceptions": [
+        "Assuming custom functions only work on static addresses (they can inspect state variables like stdout)",
+        "Forgetting that stdout/stdin are byte strings and require encoding/decoding for comparisons.",
+        "Not understanding the difference between `in` and `==` for byte strings."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.94,
+      "relevance_score": 0.9,
+      "source": "CTF_copy.pdf [page 8, 9]",
+      "learning_objective": "Implement and use custom functions with `simgr.explore()` to define complex find and avoid conditions for symbolic execution.",
+      "connections": [
+        {
+          "to": "C02",
+          "relation": "EXTENDS_TO"
+        },
+        {
+          "to": "C03",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P04",
+          "name": "Procedural Steps: Solving 02_angr_find_condition",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 02_angr_find_condition CTF challenge by defining custom Python functions for `explore()`.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrectly checking byte strings (e.g., `'Good Job' in stdout_output` vs. `'Good Job'.encode() in stdout_output`)",
+            "Boolean logic errors in `is_successful` or `should_abort` functions."
+          ],
+          "success_criteria": [
+            "Custom functions correctly identify success/failure states",
+            "Angr exploration yields the correct solution input"
+          ],
+          "error_patterns": [
+            "No solution found due to incorrect condition logic",
+            "Solution is found but leads to a 'Try again' output when run concretely."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P04-step1",
+              "name": "Step 1: Understand the success/abort conditions",
+              "label": "Procedural Step 1",
+              "hint": "Determine what output indicates success and what indicates failure. These will be used to define your custom functions.",
+              "children": [
+                {
+                  "id": "P04-step2",
+                  "name": "Step 2: Define `is_successful(state)` function",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "def is_successful(state):\n  stdout_output = state.posix.dumps(sys.stdout.fileno())\n  return b'Good Job' in stdout_output # :boolean",
+                  "hint": "This function should return `True` for states you want to 'find'. Remember that Angr I/O is in UTF-8 bytes, so encode your search string.",
+                  "source": "CTF_copy.pdf [page 8, 9]",
+                  "children": [
+                    {
+                      "id": "P04-step3",
+                      "name": "Step 3: Define `should_abort(state)` function",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "def should_abort(state):\n  stdout_output = state.posix.dumps(sys.stdout.fileno())\n  return b'Try again' in stdout_output # :boolean",
+                      "hint": "This function should return `True` for states you want to 'avoid'. It helps prune the state space.",
+                      "source": "CTF_copy.pdf [page 8, 9]",
+                      "children": [
+                        {
+                          "id": "P04-step4",
+                          "name": "Step 4: Use custom functions in `simulation.explore()`",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "simulation.explore(find=is_successful, avoid=should_abort)",
+                          "hint": "Pass the function objects directly to the `find` and `avoid` parameters.",
+                          "source": "CTF_copy.pdf [page 8]",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A04",
+          "name": "Assessment Guide: Solving 02_angr_find_condition",
+          "label": "Assessment 4",
+          "linked_challenges": [
+            "02_angr_find_condition"
+          ],
+          "objectives": [
+            "Construct Python functions to evaluate symbolic states dynamically",
+            "Correctly handle byte string comparisons for stdout/stdin content",
+            "Apply custom find/avoid functions within Angr's exploration manager"
+          ],
+          "question_prompts": [
+            {
+              "question": "Why is it important to use `.encode()` or `b''` prefix when comparing strings with `state.posix.dumps()` output?"
+            },
+            {
+              "question": "Provide an example of a scenario where using custom `find` and `avoid` functions would be more effective than simply providing target addresses."
+            },
+            {
+              "question": "What is the difference in Python between `'Good Job'.encode() in stdout_out` and `stdout_out == 'Good Job'.encode()` in the context of `should_accept_state`?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Code for `is_successful` and `should_abort` functions is logically correct and handles byte strings appropriately",
+            "Explains the benefits of dynamic state evaluation",
+            "Identifies the correct solution for `02_angr_find_condition`"
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C05",
+      "name": "Fundamentals of Symbolic Values and Bitvectors",
+      "label": "Concept 5",
+      "definition": "Understanding how Angr represents symbolic data using bitvectors, their properties (size, constraints), and different types (concrete, symbolic, unsatisfiable, unconstrained), along with the mechanisms of automatic symbol and constraint propagation.",
+      "difficulty": "beginner",
+      "bloom_level": "Understand",
+      "prerequisites": [
+        "C01"
+      ],
+      "misconceptions": [
+        "Thinking symbolic variables store a single value (they represent all possible values satisfying constraints)",
+        "Assuming Angr always injects symbols automatically (manual injection is often required)."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.93,
+      "relevance_score": 0.89,
+      "source": "CTF_copy.pdf [page 10-17]",
+      "learning_objective": "Describe symbolic bitvectors, their types, and how constraints propagate through program execution, distinguishing between automatic and manual symbol injection needs.",
+      "connections": [
+        {
+          "to": "C01",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C06",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C07",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C09",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C11",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C13",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C15",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P05",
+          "name": "Procedural Steps: Understanding Symbolic Propagation",
+          "label": "Procedural Steps",
+          "description": "Conceptual demonstration of how symbolic values and constraints propagate during symbolic execution.",
+          "difficulty": "beginner",
+          "bloom_level": "Analyze",
+          "common_errors": [
+            "Confusing forward and reverse propagation outcomes",
+            "Misinterpreting the impact of new constraints on a bitvector's possible values."
+          ],
+          "success_criteria": [
+            "Correctly trace symbolic value changes through expressions",
+            "Identify the initial conditions required to satisfy a final constraint."
+          ],
+          "error_patterns": [
+            "Incorrectly solving for initial symbolic values"
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P05-step1",
+              "name": "Step 1: Trace forward propagation of symbolic values",
+              "label": "Procedural Step 1",
+              "code_snippet": "user_input = λ\nencrypted_input0 = user_input - 3\nencrypted_input1 = encrypted_input0 + 15\nencrypted_input2 = encrypted_input1 * 7\n# If λ = 10, determine encrypted_input2",
+              "hint": "Substitute the concrete value for the initial symbol and follow the arithmetic operations step-by-step.",
+              "source": "CTF_copy.pdf [page 16]",
+              "children": [
+                {
+                  "id": "P05-step2",
+                  "name": "Step 2: Trace reverse propagation of constraints",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "user_input = λ\nencrypted_input0 = user_input - 3\nencrypted_input1 = encrypted_input0 + 15\nencrypted_input2 = encrypted_input1 * 7\n# If encrypted_input2 = 14, determine λ",
+                  "hint": "Work backwards from the final constrained value, inverting operations to find the initial symbolic value.",
+                  "source": "CTF_copy.pdf [page 17]",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A05",
+          "name": "Assessment Guide: Symbolic Values and Bitvectors",
+          "label": "Assessment 5",
+          "linked_challenges": [],
+          "objectives": [
+            "Explain the concept of bitvectors and their states (concrete, symbolic, etc.)",
+            "Describe automatic symbol and constraint propagation",
+            "Identify scenarios requiring manual symbol injection"
+          ],
+          "question_prompts": [
+            {
+              "question": "What is a bitvector, and how does it differ from a typical variable?"
+            },
+            {
+              "question": "Under what circumstances does Angr automatically inject symbols, and when is manual injection necessary?"
+            },
+            {
+              "question": "Given the constraint ( λ > 0, λ ≤ 4, λ mod 2 = 0 ) ∨( λ = 1 ), list all possible concrete values for λ."
+            },
+            {
+              "question": "Explain forward vs. reverse propagation of constraints with an example."
+            }
+          ],
+          "evaluation_criteria": [
+            "Defines bitvector types accurately",
+            "Provides clear examples of propagation",
+            "Correctly identifies reasons for manual symbol injection"
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C06",
+      "name": "Concretizing Symbolic Bitvectors",
+      "label": "Concept 6",
+      "definition": "Understanding the process and tools (like Z3, integrated into Angr) for evaluating symbolic bitvectors to produce concrete values that satisfy accumulated constraints.",
+      "difficulty": "beginner",
+      "bloom_level": "Understand",
+      "prerequisites": [
+        "C05"
+      ],
+      "misconceptions": [
+        "Believing `solver.eval()` always returns a string (it often returns an integer by default)",
+        "Not understanding `cast_to=bytes` for string-like symbolic values."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.88,
+      "relevance_score": 0.8,
+      "source": "CTF_copy.pdf [page 18, 39, 47]",
+      "learning_objective": "Use Angr's solver to concretize symbolic bitvectors into usable values, specifying output types like bytes when necessary.",
+      "connections": [
+        {
+          "to": "C05",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C08",
+          "relation": "ENABLES"
+        },
+        {
+          "to": "C10",
+          "relation": "ENABLES"
+        },
+        {
+          "to": "C12",
+          "relation": "ENABLES"
+        },
+        {
+          "to": "C14",
+          "relation": "ENABLES"
+        },
+        {
+          "to": "C16",
+          "relation": "ENABLES"
+        },
+        {
+          "to": "C19",
+          "relation": "ENABLES"
+        },
+        {
+          "to": "C21",
+          "relation": "ENABLES"
+        },
+        {
+          "to": "C23",
+          "relation": "ENABLES"
+        }
+      ],
+      "children": [
+        {
+          "id": "P06",
+          "name": "Procedural Steps: Concretizing Bitvectors",
+          "label": "Procedural Steps",
+          "description": "Steps to concretize a symbolic bitvector to obtain concrete values that satisfy the current state's constraints.",
+          "difficulty": "beginner",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Forgetting to use `cast_to=bytes` for string inputs",
+            "Attempting to `eval()` an unsatisfiable bitvector."
+          ],
+          "success_criteria": [
+            "Correct concrete value obtained from the symbolic bitvector",
+            "Output type matches expectation (e.g., integer vs. byte string)."
+          ],
+          "error_patterns": [
+            "ConstraintUnsatError",
+            "TypeError when trying to decode an integer as bytes."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P06-step1",
+              "name": "Step 1: Access the solver from a solution state",
+              "label": "Procedural Step 1",
+              "code_snippet": "solution_state = simulation.found[0]\nsolver = solution_state.solver",
+              "hint": "After a successful `explore`, retrieve one of the found states. The solver is associated with that specific state's constraints.",
+              "source": "CTF_copy.pdf [page 7]",
+              "children": [
+                {
+                  "id": "P06-step2",
+                  "name": "Step 2: Evaluate the symbolic bitvector",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "solution_int = solver.eval(password0)\nsolution_bytes = solver.eval(password_str, cast_to=bytes)",
+                  "hint": "Use `solver.eval()` with the symbolic bitvector. For string-like inputs, specify `cast_to=bytes`. The `eval()` function by default attempts to find 'any' single value.",
+                  "source": "CTF_copy.pdf [page 25, 39, 47]",
+                  "children": [
+                    {
+                      "id": "P06-step3",
+                      "name": "Step 3: Decode byte string if necessary",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "solution_str = solution_bytes.decode()",
+                      "hint": "If `eval` with `cast_to=bytes` returns a byte string, you often need to decode it to a Python string for printing or further processing.",
+                      "source": "CTF_copy.pdf [page 39, 47]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A06",
+          "name": "Assessment Guide: Concretizing Bitvectors",
+          "label": "Assessment 6",
+          "linked_challenges": [],
+          "objectives": [
+            "Explain the role of the Z3 solver in Angr",
+            "Correctly use `solver.eval()` to extract concrete values",
+            "Differentiate between default `eval()` output and `cast_to=bytes` output."
+          ],
+          "question_prompts": [
+            {
+              "question": "How do you obtain a Python string from a symbolic bitvector that represents user input?"
+            },
+            {
+              "question": "List two other functionalities Angr's solver provides beyond finding 'any' value."
+            },
+            {
+              "question": "What would happen if you try to `eval()` a bitvector that is 'unsatisfiable'?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Demonstrates correct `eval()` usage with appropriate `cast_to` parameters",
+            "Explains the purpose of the solver and different evaluation options",
+            "Predicts behavior for unsatisfiable constraints."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C07",
+      "name": "Manual Symbolic Injection into Registers",
+      "label": "Concept 7",
+      "definition": "The technique of manually assigning symbolic bitvectors directly to CPU registers within an Angr state, enabling symbolic execution to bypass complex, efficiency-problematic input handling functions like formatted `scanf`.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C05"
+      ],
+      "misconceptions": [
+        "Thinking Angr can always efficiently symbolic execute any complex input function",
+        "Forgetting to set the initial execution address *after* the bypassed input function.",
+        "Incorrectly guessing which registers hold the input values."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.92,
+      "relevance_score": 0.88,
+      "source": "CTF_copy.pdf [page 19-22]",
+      "learning_objective": "Manually inject symbolic values into registers to facilitate symbolic execution past complex input routines.",
+      "connections": [
+        {
+          "to": "C05",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C08",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P07",
+          "name": "Procedural Steps: Injecting Symbols into Registers",
+          "label": "Procedural Steps",
+          "description": "Procedure to manually inject symbolic bitvectors into CPU registers and start symbolic execution from a specific address.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Starting execution at the wrong address (before input function returns, or too late)",
+            "Assigning symbolic values to incorrect registers."
+          ],
+          "success_criteria": [
+            "Initial state correctly configured with symbolic registers",
+            "Symbolic execution starts from the desired program point."
+          ],
+          "error_patterns": [
+            "Angr fails to find a path, indicating an unreachable start state or invalid register values.",
+            "Incorrect values concretized."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P07-step1",
+              "name": "Step 1: Identify the address to start symbolic execution",
+              "label": "Procedural Step 1",
+              "hint": "Locate the instruction address immediately after the complex input function returns and its output values are available in registers. Use a disassembler.",
+              "source": "CTF_copy.pdf [page 22]",
+              "children": [
+                {
+                  "id": "P07-step2",
+                  "name": "Step 2: Create a blank state at the identified address",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x8048XXX\ninitial_state = project.factory.blank_state(addr=start_address)",
+                  "hint": "`blank_state` is used when you need to control the exact starting point of execution, rather than the binary's entry point.",
+                  "source": "CTF_copy.pdf [page 25]",
+                  "children": [
+                    {
+                      "id": "P07-step3",
+                      "name": "Step 3: Create symbolic bitvectors for inputs",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "import claripy\npassword0 = claripy.BVS('password0', 32)\npassword1 = claripy.BVS('password1', 32)",
+                      "hint": "`claripy.BVS()` creates a symbolic bitvector. The second argument is the size in bits (e.g., 32 for a 4-byte integer).",
+                      "source": "CTF_copy.pdf [page 25]",
+                      "children": [
+                        {
+                          "id": "P07-step4",
+                          "name": "Step 4: Assign symbolic bitvectors to registers",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "initial_state.regs.eax = password0\ninitial_state.regs.ebx = password1",
+                          "hint": "Identify the registers where the input function would have placed its return values. Set these registers in the `initial_state` to your symbolic bitvectors.",
+                          "source": "CTF_copy.pdf [page 22, 25]",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A07",
+          "name": "Assessment Guide: Injecting Symbols into Registers",
+          "label": "Assessment 7",
+          "linked_challenges": [
+            "03_angr_symbolic_registers"
+          ],
+          "objectives": [
+            "Determine the correct address to begin symbolic execution after an input function",
+            "Create symbolic bitvectors with appropriate sizes",
+            "Map symbolic bitvectors to correct CPU registers in Angr"
+          ],
+          "question_prompts": [
+            {
+              "question": "Why is it often more efficient to manually inject symbols into registers rather than symbolically execute a complex `scanf` function?"
+            },
+            {
+              "question": "If a function returns three 32-bit integers in EAX, EBX, and ECX, how would you set up symbolic bitvectors and assign them to the initial state's registers?"
+            },
+            {
+              "question": "What happens if you try to start symbolic execution at an address *before* the `get_user_input` function if you're manually injecting symbols?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies the start address for register injection",
+            "Demonstrates proper `claripy.BVS` usage for register-sized inputs",
+            "Accurately assigns symbolic values to CPU registers in a given state."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C08",
+      "name": "Solving CTF 03_angr_symbolic_registers",
+      "label": "Concept 8",
+      "definition": "Applying the technique of manual symbolic register injection to solve a CTF challenge where three numbers, used as a password, are returned by a `get_user_input()` function into registers.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C07",
+        "C06"
+      ],
+      "misconceptions": [
+        "Incorrectly assuming the `scanf` call itself needs symbolic execution",
+        "Not matching the bitvector size to the expected integer size (e.g., 32-bit for integers)."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.91,
+      "relevance_score": 0.89,
+      "source": "CTF_copy.pdf [page 23-25]",
+      "learning_objective": "Solve the '03_angr_symbolic_registers' CTF by manually injecting symbolic values into appropriate registers and guiding Angr to a success state.",
+      "connections": [
+        {
+          "to": "C07",
+          "relation": "IMPLEMENTED_BY"
+        },
+        {
+          "to": "C06",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P08",
+          "name": "Procedural Steps: Solving 03_angr_symbolic_registers",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 03_angr_symbolic_registers CTF challenge using manual symbolic register injection.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrect `start_address` after `get_user_input` returns",
+            "Misidentifying the registers (`eax`, `ebx`, `ecx` etc.) where the password numbers are stored."
+          ],
+          "success_criteria": [
+            "Angr finds a solution state",
+            "Concretized symbolic register values form the correct password."
+          ],
+          "error_patterns": [
+            "No paths found to the success condition",
+            "Program crashes or outputs 'Try again' with concretized input."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P08-step1",
+              "name": "Step 1: Determine start address and target registers",
+              "label": "Procedural Step 1",
+              "hint": "Analyze the binary (e.g., with Ghidra/IDA) to find the address just after `get_user_input()` returns and identifies the registers (`eax`, `ebx`, `ecx`) that hold the three password numbers.",
+              "source": "CTF_copy.pdf [page 24]",
+              "children": [
+                {
+                  "id": "P08-step2",
+                  "name": "Step 2: Create a blank state and symbolic bitvectors",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x080488d1\ninitial_state = project.factory.blank_state(addr=start_address)\npassword0 = claripy.BVS('password0', 32)\npassword1 = claripy.BVS('password1', 32)\npassword2 = claripy.BVS('password2', 32)",
+                  "hint": "All three password numbers are likely 32-bit integers, so use a size of 32 bits for `claripy.BVS`.",
+                  "source": "CTF_copy.pdf [page 25]",
+                  "children": [
+                    {
+                      "id": "P08-step3",
+                      "name": "Step 3: Inject symbolic bitvectors into registers",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "initial_state.regs.eax = password0\ninitial_state.regs.ebx = password1\ninitial_state.regs.ecx = password2",
+                      "hint": "Match your symbolic bitvectors to the specific registers identified in Step 1. The template on page 25 uses `e???x` as a placeholder.",
+                      "source": "CTF_copy.pdf [page 25]",
+                      "children": [
+                        {
+                          "id": "P08-step4",
+                          "name": "Step 4: Configure and run simulation with find/avoid",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "simulation = project.factory.simgr(initial_state)\nsimulation.explore(find=is_successful, avoid=should_abort)\n# ... retrieve solution using solution_state.solver.eval() for each password BVS",
+                          "hint": "Use the `is_successful` and `should_abort` functions as defined in C04, if applicable, or target specific addresses as in C02.",
+                          "source": "CTF_copy.pdf [page 25]",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A08",
+          "name": "Assessment Guide: Solving 03_angr_symbolic_registers",
+          "label": "Assessment 8",
+          "linked_challenges": [
+            "03_angr_symbolic_registers"
+          ],
+          "objectives": [
+            "Successfully identify register usage for function return values",
+            "Apply manual symbolic register injection to bypass complex input parsing",
+            "Concretize multiple symbolic integer values from the solver."
+          ],
+          "question_prompts": [
+            {
+              "question": "If `get_user_input` stored its values directly into memory instead of registers, which symbolic injection technique would you use instead?"
+            },
+            {
+              "question": "How would you verify that your chosen `start_address` is correct before running the full symbolic execution?"
+            },
+            {
+              "question": "If the password numbers were 64-bit instead of 32-bit, what changes would you make to the `claripy.BVS` calls?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies the start address and relevant registers (e.g., `0x080488d1`, `eax`, `ebx`, `ecx`)",
+            "Provides an Angr script that correctly solves the challenge",
+            "Explains the rationale behind using `blank_state` and register assignments."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C09",
+      "name": "Manual Symbolic Injection into the Stack",
+      "label": "Concept 9",
+      "definition": "The technique of manually constructing a stack frame and injecting symbolic bitvectors into specific stack locations (e.g., local variables) to simulate input read into stack memory, bypassing complex input routines.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C05"
+      ],
+      "misconceptions": [
+        "Assuming `state.stack_push()` always appends to the logical top of the binary's stack (it modifies the simulated ESP)",
+        "Forgetting to correctly adjust the stack pointer (`esp`) to account for function prologue and padding.",
+        "Incorrectly calculating offsets relative to `ebp` for local variables."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.9,
+      "relevance_score": 0.87,
+      "source": "CTF_copy.pdf [page 26-28, 31-32]",
+      "learning_objective": "Manually create a symbolic stack frame and inject symbolic values into stack-based local variables for symbolic execution.",
+      "connections": [
+        {
+          "to": "C05",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C10",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P09",
+          "name": "Procedural Steps: Injecting Symbols into the Stack",
+          "label": "Procedural Steps",
+          "description": "Procedure to set up an initial state with symbolic values on the stack at specific offsets (e.g., local variables).",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrect `ebp` and `esp` initial alignment",
+            "Miscalculating `padding_length_in_bytes` or local variable offsets",
+            "Pushing bitvectors in the wrong order or with incorrect sizes."
+          ],
+          "success_criteria": [
+            "Simulated stack matches the expected layout at `start_address`",
+            "Symbolic execution proceeds correctly with stack-injected values."
+          ],
+          "error_patterns": [
+            "Stack corruption or access violations",
+            "Incorrect values read from stack, leading to wrong paths."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P09-step1",
+              "name": "Step 1: Identify start address and local variable offsets",
+              "label": "Procedural Step 1",
+              "hint": "Locate the address within the function where stack variables are expected to be populated. Use a disassembler to find the `ebp` relative offsets (e.g., `ebp-0x10`) for the local variables (passwords).",
+              "source": "CTF_copy.pdf [page 30]",
+              "children": [
+                {
+                  "id": "P09-step2",
+                  "name": "Step 2: Create a blank state and align `ebp` and `esp`",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x80486ae\ninitial_state = project.factory.blank_state(addr=start_address)\ninitial_state.regs.ebp = initial_state.regs.esp",
+                  "hint": "When starting within a function, `ebp` and `esp` often point to the same location initially (or `ebp` is base of current frame). Adjust `ebp` to match the expected function entry frame.",
+                  "source": "CTF_copy.pdf [page 32, 33]",
+                  "children": [
+                    {
+                      "id": "P09-step3",
+                      "name": "Step 3: Adjust `esp` for padding",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "padding_length_in_bytes = 0x8 # Example based on 4-byte password at ebp-0xc\ninitial_state.regs.esp -= padding_length_in_bytes",
+                      "hint": "Calculate the bytes between `ebp` and the first byte of your lowest address symbolic stack variable. This padding needs to be 'skipped' by adjusting `esp`.",
+                      "source": "CTF_copy.pdf [page 32, 33]",
+                      "children": [
+                        {
+                          "id": "P09-step4",
+                          "name": "Step 4: Create symbolic bitvectors and push to stack",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "password0 = claripy.BVS('password0', 32)\npassword1 = claripy.BVS('password1', 32)\ninitial_state.stack_push(password0)\ninitial_state.stack_push(password1)",
+                          "hint": "Push the symbolic bitvectors in the order they would appear on the stack, typically highest address (pushed first) to lowest address (pushed last). Account for stack growth direction (downwards).",
+                          "source": "CTF_copy.pdf [page 28, 33]",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A09",
+          "name": "Assessment Guide: Injecting Symbols into the Stack",
+          "label": "Assessment 9",
+          "linked_challenges": [
+            "04_angr_symbolic_stack"
+          ],
+          "objectives": [
+            "Accurately reconstruct a stack frame in Angr for symbolic injection",
+            "Correctly identify `ebp` relative offsets for local variables",
+            "Manipulate `esp` and use `state.stack_push()` to place symbolic data."
+          ],
+          "question_prompts": [
+            {
+              "question": "Explain how the `ebp` and `esp` registers are used when injecting symbols into the stack, especially when starting execution within a function."
+            },
+            {
+              "question": "If a local variable `var_10h` is at `ebp-0x10` and `var_ch` is at `ebp-0xc`, and both are 4-byte integers, how much padding would you need to account for if you want to push `var_ch` then `var_10h`?"
+            },
+            {
+              "question": "What is the consequence of pushing symbolic values in the wrong order onto the stack?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Provides a correct sequence of `ebp` and `esp` manipulations for a given stack layout",
+            "Calculates padding and offsets accurately",
+            "Demonstrates proper `stack_push` usage and ordering."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C10",
+      "name": "Solving CTF 04_angr_symbolic_stack",
+      "label": "Concept 10",
+      "definition": "Applying manual symbolic stack injection to solve a CTF challenge where password values are read onto the stack and subsequently processed by a complex function.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C09",
+        "C06"
+      ],
+      "misconceptions": [
+        "Overlooking the need to fully recreate the stack frame, not just push variables",
+        "Incorrectly determining the size of the password bitvectors or the padding length."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.92,
+      "relevance_score": 0.9,
+      "source": "CTF_copy.pdf [page 29-33]",
+      "learning_objective": "Solve the '04_angr_symbolic_stack' CTF by manually configuring the stack with symbolic password values and guiding Angr to a success state.",
+      "connections": [
+        {
+          "to": "C09",
+          "relation": "IMPLEMENTED_BY"
+        },
+        {
+          "to": "C06",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P10",
+          "name": "Procedural Steps: Solving 04_angr_symbolic_stack",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 04_angr_symbolic_stack CTF challenge using manual symbolic stack injection.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Calculating incorrect `padding_length_in_bytes` based on variable sizes and offsets",
+            "Failing to properly align `ebp` and `esp` before pushing."
+          ],
+          "success_criteria": [
+            "Angr finds a solution path",
+            "The concretized password values are correct when evaluated."
+          ],
+          "error_patterns": [
+            "Execution aborts or takes incorrect paths due to malformed stack",
+            "Incorrect password found."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P10-step1",
+              "name": "Step 1: Identify start address and stack variable details",
+              "label": "Procedural Step 1",
+              "hint": "Locate the `start_address` (e.g., `0x80486ae`) within `handle_user()` where symbolic values are needed. Identify the sizes and `ebp` offsets for `password0` (`ebp-0xc`) and `password1` (`ebp-0x10`). Assume 4-byte integers based on common CTF patterns unless specified.",
+              "source": "CTF_copy.pdf [page 30]",
+              "children": [
+                {
+                  "id": "P10-step2",
+                  "name": "Step 2: Create blank state and initial stack setup",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x80486ae\ninitial_state = project.factory.blank_state(addr=start_address)\npassword0 = claripy.BVS('password0', 32) # Assume 4 bytes = 32 bits\npassword1 = claripy.BVS('password1', 32)\ninitial_state.regs.ebp = initial_state.regs.esp",
+                  "hint": "Initialize `ebp` and `esp` to the same point, effectively creating a clean stack frame for the symbolic execution to begin.",
+                  "source": "CTF_copy.pdf [page 33]",
+                  "children": [
+                    {
+                      "id": "P10-step3",
+                      "name": "Step 3: Calculate and apply stack padding, then push symbolic values",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "# Example for password0 at ebp-0xc (4 bytes) and password1 at ebp-0x10 (4 bytes)\n# Padding from ebp to the lowest byte of password0 (at ebp-0xc)\n# If password0 is 4 bytes, it occupies ebp-0xc, ebp-0xd, ebp-0xe, ebp-0xf.\n# The space between ebp and ebp-0xf is 0xF bytes. If 4 bytes are for password0, then 0xB bytes of padding.\n# Or, simpler: password0 at offset 0xc means 0xc bytes from ebp. If password0 is 4 bytes, it occupies 0xc, 0xd, 0xe, 0xf. So, 0xc - 4 = 8 bytes before it.\npadding_length_in_bytes = 8 # (0xc - 4) for 4-byte password0 at ebp-0xc\ninitial_state.regs.esp -= padding_length_in_bytes\ninitial_state.stack_push(password0)\ninitial_state.stack_push(password1)",
+                      "hint": "The goal is to place `password0` at `ebp-0xc` and `password1` at `ebp-0x10`. Adjust `esp` down past any padding before pushing the symbolic bitvectors in the correct order (highest address first, which implies `password0` is pushed before `password1` on a downward growing stack if password1 is at lower address).",
+                      "source": "CTF_copy.pdf [page 32, 33]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A10",
+          "name": "Assessment Guide: Solving 04_angr_symbolic_stack",
+          "label": "Assessment 10",
+          "linked_challenges": [
+            "04_angr_symbolic_stack"
+          ],
+          "objectives": [
+            "Accurately calculate stack variable offsets and required padding",
+            "Correctly set `ebp` and `esp` for an arbitrary function start address",
+            "Implement symbolic stack injection and retrieve correct password values."
+          ],
+          "question_prompts": [
+            {
+              "question": "Given `password0` at `ebp-0x10` (8 bytes) and `password1` at `ebp-0x20` (8 bytes), describe the steps to inject these into the stack, including padding calculations."
+            },
+            {
+              "question": "Why is it crucial to set `initial_state.regs.ebp = initial_state.regs.esp` when starting symbolic execution from within a function for stack injection?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly calculates `padding_length_in_bytes` for the given offsets and sizes",
+            "Provides a working Angr script that successfully injects symbolic stack values and finds the password.",
+            "Explains the logic behind the order of `stack_push` operations."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C11",
+      "name": "Manual Symbolic Injection into Global Memory",
+      "label": "Concept 11",
+      "definition": "The technique of manually assigning symbolic bitvectors directly to fixed global memory addresses, bypassing input functions that write to these predetermined locations.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C05"
+      ],
+      "misconceptions": [
+        "Confusing global memory addresses with stack or heap addresses (global addresses are typically static and known at compile time)",
+        "Assuming dynamic memory injection techniques are needed for global memory."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.9,
+      "relevance_score": 0.86,
+      "source": "CTF_copy.pdf [page 34-36]",
+      "learning_objective": "Manually inject symbolic values into global memory addresses to facilitate symbolic execution past complex input routines.",
+      "connections": [
+        {
+          "to": "C05",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C12",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P11",
+          "name": "Procedural Steps: Injecting Symbols into Global Memory",
+          "label": "Procedural Steps",
+          "description": "Procedure to manually inject symbolic bitvectors into global memory addresses and start symbolic execution from a specific address.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrectly identifying the global memory addresses (e.g., using a stack address)",
+            "Providing incorrect bitvector sizes for the target memory regions."
+          ],
+          "success_criteria": [
+            "Initial state correctly configured with symbolic global memory",
+            "Symbolic execution proceeds with the injected values."
+          ],
+          "error_patterns": [
+            "Program reads concrete values instead of symbolic, leading to incorrect paths.",
+            "Memory access errors if addresses are invalid."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P11-step1",
+              "name": "Step 1: Identify start address and global memory targets",
+              "label": "Procedural Step 1",
+              "hint": "Locate the address after the input function that writes to global memory returns. Use a disassembler to find the fixed global addresses (e.g., `0xaf84120`) where the input values are stored.",
+              "source": "CTF_copy.pdf [page 36]",
+              "children": [
+                {
+                  "id": "P11-step2",
+                  "name": "Step 2: Create a blank state and symbolic bitvectors",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x8048XXX # Address after scanf\ninitial_state = project.factory.blank_state(addr=start_address)\npassword_part_0 = claripy.BVS('password0', 32)",
+                  "hint": "Create symbolic bitvectors with appropriate sizes (e.g., 32 bits for an unsigned integer `%u`).",
+                  "source": "CTF_copy.pdf [page 39]",
+                  "children": [
+                    {
+                      "id": "P11-step3",
+                      "name": "Step 3: Store symbolic bitvectors into global memory",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "password0_address = 0xaf84120\ninitial_state.memory.store(password0_address, password_part_0)",
+                      "hint": "Use `state.memory.store(address, bitvector)` to place the symbolic values at their respective global memory locations. Ensure the size of the bitvector matches the expected size at the address.",
+                      "source": "CTF_copy.pdf [page 36, 39]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A11",
+          "name": "Assessment Guide: Injecting Symbols into Global Memory",
+          "label": "Assessment 11",
+          "linked_challenges": [
+            "05_angr_symbolic_memory"
+          ],
+          "objectives": [
+            "Differentiate global memory addresses from other memory types",
+            "Identify fixed global memory locations for symbolic injection",
+            "Use `state.memory.store()` to place symbolic values at global addresses."
+          ],
+          "question_prompts": [
+            {
+              "question": "How do you identify a global memory address in a disassembled binary that `scanf` might write to?"
+            },
+            {
+              "question": "What is the key difference between injecting symbols into registers and into global memory?"
+            },
+            {
+              "question": "If `scanf(\"%s\", buffer)` writes to a 10-byte global buffer at `0x10000`, how would you create and store a symbolic bitvector for this buffer?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies global memory addresses from binary analysis",
+            "Provides accurate `state.memory.store` calls with correct addresses and bitvector sizes",
+            "Explains the advantages of global memory injection in specific scenarios."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C12",
+      "name": "Solving CTF 05_angr_symbolic_memory",
+      "label": "Concept 12",
+      "definition": "Applying manual symbolic global memory injection to solve a CTF challenge where four strings, used as a password, are read into distinct global memory buffers by a formatted `scanf`.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C11",
+        "C06"
+      ],
+      "misconceptions": [
+        "Struggling to identify individual buffer locations in memory",
+        "Forgetting to correctly set the `cast_to=bytes` and `.decode()` when evaluating string-like bitvectors."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.91,
+      "relevance_score": 0.89,
+      "source": "CTF_copy.pdf [page 37-39]",
+      "learning_objective": "Solve the '05_angr_symbolic_memory' CTF by manually injecting symbolic values into global memory buffers and guiding Angr to a success state.",
+      "connections": [
+        {
+          "to": "C11",
+          "relation": "IMPLEMENTED_BY"
+        },
+        {
+          "to": "C06",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P12",
+          "name": "Procedural Steps: Solving 05_angr_symbolic_memory",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 05_angr_symbolic_memory CTF challenge using manual symbolic global memory injection.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrectly identifying the memory addresses for each of the four password strings",
+            "Providing incorrect bitvector sizes for the strings (e.g., 8 characters = 64 bits)."
+          ],
+          "success_criteria": [
+            "Angr finds a solution state",
+            "Concretized symbolic string values form the correct password when decoded."
+          ],
+          "error_patterns": [
+            "No paths found to the success condition",
+            "Outputting an incorrect password string that fails validation."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P12-step1",
+              "name": "Step 1: Determine start address and global memory buffer locations",
+              "label": "Procedural Step 1",
+              "hint": "Analyze the binary (e.g., with Ghidra/IDA) to find the address just after `scanf` returns, and identify the distinct global memory addresses where the four password strings are stored. Note their expected lengths.",
+              "source": "CTF_copy.pdf [page 38]",
+              "children": [
+                {
+                  "id": "P12-step2",
+                  "name": "Step 2: Create a blank state and symbolic bitvectors for each string",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x8048XXX # After scanf\ninitial_state = project.factory.blank_state(addr=start_address)\npassword0 = claripy.BVS('password0', 64) # Assuming 8-char strings\npassword1 = claripy.BVS('password1', 64)\n# ... for password2, password3",
+                  "hint": "Each password string's length should be translated into bits (e.g., 8 characters * 8 bits/char = 64 bits).",
+                  "source": "CTF_copy.pdf [page 39]",
+                  "children": [
+                    {
+                      "id": "P12-step3",
+                      "name": "Step 3: Store symbolic bitvectors into their respective memory locations",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "password0_address = 0xaf84XXX\ninitial_state.memory.store(password0_address, password0)\npassword1_address = 0xaf84YYY\ninitial_state.memory.store(password1_address, password1)\n# ... for password2, password3",
+                      "hint": "Ensure each symbolic bitvector is stored at its correct, unique global memory address.",
+                      "source": "CTF_copy.pdf [page 39]",
+                      "children": [
+                        {
+                          "id": "P12-step4",
+                          "name": "Step 4: Configure and run simulation, then concretize string solutions",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "simulation = project.factory.simgr(initial_state)\nsimulation.explore(find=is_successful, avoid=should_abort)\nif simulation.found:\n  solution_state = simulation.found[0]\n  solution0 = solution_state.solver.eval(password0, cast_to=bytes).decode()\n  # ... for password1, password2, password3",
+                          "hint": "Remember `cast_to=bytes` and `.decode()` to get readable string outputs for each password part.",
+                          "source": "CTF_copy.pdf [page 39]",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A12",
+          "name": "Assessment Guide: Solving 05_angr_symbolic_memory",
+          "label": "Assessment 12",
+          "linked_challenges": [
+            "05_angr_symbolic_memory"
+          ],
+          "objectives": [
+            "Identify multiple distinct global memory buffers in a binary",
+            "Correctly create and store multiple symbolic string bitvectors",
+            "Retrieve and decode multiple symbolic string solutions."
+          ],
+          "question_prompts": [
+            {
+              "question": "How would you determine the length (and thus bitvector size) for each of the four password strings if it's not explicitly given?"
+            },
+            {
+              "question": "If `scanf` used a single format string like `\"%s %s %s %s\"`, what might happen if the buffers are not correctly sized in memory?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies all global memory addresses and their corresponding sizes",
+            "Provides an Angr script that successfully injects symbolic memory and finds all password parts",
+            "All retrieved solutions are correctly decoded to strings."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C13",
+      "name": "Manual Symbolic Injection into Dynamic Memory (Heap)",
+      "label": "Concept 13",
+      "definition": "The advanced technique of manually injecting symbolic values into dynamically allocated heap memory by first overwriting pointers that refer to these heap regions with arbitrary, known-good addresses, then storing symbolic data at these fixed 'fake' heap locations.",
+      "difficulty": "advanced",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C05",
+        "C11"
+      ],
+      "misconceptions": [
+        "Believing dynamic memory addresses are predictable like global memory (they are not)",
+        "Trying to directly `store()` to a `malloc`'d address (it's unknown at analysis time, requires pointer redirection)."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.93,
+      "relevance_score": 0.9,
+      "source": "CTF_copy.pdf [page 40-42]",
+      "learning_objective": "Manipulate pointers in symbolic execution to redirect dynamic memory allocations to known, user-controlled addresses for symbolic data injection.",
+      "connections": [
+        {
+          "to": "C05",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C11",
+          "relation": "EXTENDS_TO"
+        },
+        {
+          "to": "C14",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P13",
+          "name": "Procedural Steps: Injecting Symbols into Dynamic Memory",
+          "label": "Procedural Steps",
+          "description": "Procedure to inject symbolic bitvectors into dynamic memory by overwriting pointers and using 'fake' heap addresses.",
+          "difficulty": "advanced",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Failing to identify the pointer's location that needs overwriting",
+            "Choosing a 'fake' heap address that conflicts with other memory regions",
+            "Incorrectly determining the `endness` of the pointer write."
+          ],
+          "success_criteria": [
+            "Pointer is successfully redirected to the 'fake' heap address",
+            "Symbolic data is correctly stored at the 'fake' heap location."
+          ],
+          "error_patterns": [
+            "Memory errors or unexpected program behavior due to bad 'fake' heap address or incorrect pointer overwrite.",
+            "No paths found due to memory access issues."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P13-step1",
+              "name": "Step 1: Identify start address and pointer to dynamic memory",
+              "label": "Procedural Step 1",
+              "hint": "Locate the address after `scanf` returns, and identify the static address where the pointer to the `malloc`'d region is stored (e.g., `0xaf84dd8`).",
+              "source": "CTF_copy.pdf [page 41]",
+              "children": [
+                {
+                  "id": "P13-step2",
+                  "name": "Step 2: Choose a 'fake' heap address and create symbolic bitvector",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "fake_heap_address = 0x44444444 # Choose an unused, arbitrary address\npassword = claripy.BVS('password', 64)",
+                  "hint": "Pick an arbitrary, unlikely-to-be-used address (like `0x44444444`) that will serve as your 'fixed' symbolic memory location on the heap. This address should not be used by the program for other purposes.",
+                  "source": "CTF_copy.pdf [page 41, 42]",
+                  "children": [
+                    {
+                      "id": "P13-step3",
+                      "name": "Step 3: Overwrite the pointer to point to the 'fake' heap address",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "pointer_to_malloc_memory_address = 0xaf84dd8\ninitial_state.memory.store(\n    pointer_to_malloc_memory_address,\n    fake_heap_address,\n    endness=project.arch.memory_endness)",
+                      "hint": "Store your chosen `fake_heap_address` into the program's static pointer location. `endness` ensures correct byte order (little-endian or big-endian).",
+                      "source": "CTF_copy.pdf [page 41, 47]",
+                      "children": [
+                        {
+                          "id": "P13-step4",
+                          "name": "Step 4: Store the symbolic bitvector at the 'fake' heap address",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "initial_state.memory.store(fake_heap_address, password)",
+                          "hint": "Now that the program's pointer points to your `fake_heap_address`, you can safely store your symbolic data there.",
+                          "source": "CTF_copy.pdf [page 41, 47]",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A13",
+          "name": "Assessment Guide: Injecting Symbols into Dynamic Memory",
+          "label": "Assessment 13",
+          "linked_challenges": [
+            "06_angr_symbolic_dynamic_memory"
+          ],
+          "objectives": [
+            "Explain why direct symbolic injection into dynamic memory is problematic",
+            "Implement pointer redirection to fixed 'fake' heap addresses",
+            "Correctly store symbolic data at these redirected locations."
+          ],
+          "question_prompts": [
+            {
+              "question": "Why can't you simply `state.memory.store()` a symbolic bitvector directly into the address returned by `malloc()`?"
+            },
+            {
+              "question": "How do you choose a `fake_heap_address`, and what considerations are important for its selection?"
+            },
+            {
+              "question": "What is `project.arch.memory_endness` used for when overwriting pointers?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Explains the necessity of pointer overwriting for dynamic memory injection",
+            "Correctly identifies the pointer's static location and chooses a valid `fake_heap_address`",
+            "Demonstrates proper `state.memory.store` usage for both pointer and symbolic data."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "advanced",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C14",
+      "name": "Solving CTF 06_angr_symbolic_dynamic_memory",
+      "label": "Concept 14",
+      "definition": "Applying manual symbolic dynamic memory injection to solve a CTF challenge where password values are read into two dynamically allocated heap buffers, accessed via static pointers.",
+      "difficulty": "advanced",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C13",
+        "C06"
+      ],
+      "misconceptions": [
+        "Struggling with managing two separate dynamically allocated buffers and their pointers",
+        "Forgetting that each pointer needs to be redirected individually."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.92,
+      "relevance_score": 0.91,
+      "source": "CTF_copy.pdf [page 43-47]",
+      "learning_objective": "Solve the '06_angr_symbolic_dynamic_memory' CTF by redirecting multiple heap pointers and injecting symbolic data into controlled memory regions.",
+      "connections": [
+        {
+          "to": "C13",
+          "relation": "IMPLEMENTED_BY"
+        },
+        {
+          "to": "C06",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P14",
+          "name": "Procedural Steps: Solving 06_angr_symbolic_dynamic_memory",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 06_angr_symbolic_dynamic_memory CTF challenge using manual symbolic dynamic memory injection for multiple buffers.",
+          "difficulty": "advanced",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Mixing up the pointers or their corresponding `fake_heap_address` locations",
+            "Not allocating distinct `fake_heap_address` values that don't overlap for each buffer."
+          ],
+          "success_criteria": [
+            "Angr finds a solution state",
+            "Both concretized symbolic string values form the correct passwords."
+          ],
+          "error_patterns": [
+            "Memory corruption during execution due to overlapping fake heap addresses",
+            "Only one password found or incorrect passwords."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P14-step1",
+              "name": "Step 1: Identify start address, pointer locations, and buffer sizes",
+              "label": "Procedural Step 1",
+              "hint": "Locate the `start_address` (e.g., `0x80486af`) after `scanf`. Identify the static addresses where pointers to the `malloc`'d regions are stored (e.g., `0xa2def74` for `obj.buffer0`, `0xa2def7c` for `obj.buffer1`). Determine the expected sizes of each buffer.",
+              "source": "CTF_copy.pdf [page 44, 45, 47]",
+              "children": [
+                {
+                  "id": "P14-step2",
+                  "name": "Step 2: Choose distinct 'fake' heap addresses and create symbolic bitvectors",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "fake_heap_address0 = 0x44444444\nfake_heap_address1 = 0x44445444 # Ensure no overlap\npassword0 = claripy.BVS('password0', 64)\npassword1 = claripy.BVS('password1', 64)",
+                  "hint": "Crucially, select *distinct* `fake_heap_address` values for each buffer to prevent memory conflicts. Ensure there's enough space between them.",
+                  "source": "CTF_copy.pdf [page 46, 47]",
+                  "children": [
+                    {
+                      "id": "P14-step3",
+                      "name": "Step 3: Redirect each pointer and store symbolic values",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "pointer_to_malloc_memory_address0 = 0xa2def74\ninitial_state.memory.store(pointer_to_malloc_memory_address0, fake_heap_address0, endness=project.arch.memory_endness)\ninitial_state.memory.store(fake_heap_address0, password0)\n\npointer_to_malloc_memory_address1 = 0xa2def7c\ninitial_state.memory.store(pointer_to_malloc_memory_address1, fake_heap_address1, endness=project.arch.memory_endness)\ninitial_state.memory.store(fake_heap_address1, password1)",
+                      "hint": "Repeat the pointer redirection and symbolic data storage process for each dynamically allocated buffer.",
+                      "source": "CTF_copy.pdf [page 47]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A14",
+          "name": "Assessment Guide: Solving 06_angr_symbolic_dynamic_memory",
+          "label": "Assessment 14",
+          "linked_challenges": [
+            "06_angr_symbolic_dynamic_memory"
+          ],
+          "objectives": [
+            "Manage multiple pointer redirections for distinct heap buffers",
+            "Allocate non-overlapping `fake_heap_address` regions",
+            "Successfully inject and retrieve multiple symbolic values from dynamic memory."
+          ],
+          "question_prompts": [
+            {
+              "question": "If you had 5 dynamically allocated buffers, how would your strategy for choosing `fake_heap_address` values change?"
+            },
+            {
+              "question": "What kind of debugging steps would you take if your program yielded incorrect passwords, especially if only one was wrong?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies all pointer addresses (`0xa2def74`, `0xa2def7c`)",
+            "Chooses valid, distinct, and non-overlapping `fake_heap_address` values",
+            "Provides a working Angr script that successfully injects and solves for both passwords."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "advanced",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C15",
+      "name": "Manual Symbolic Injection via the File System",
+      "label": "Concept 15",
+      "definition": "The technique of defining an alternate, symbolic filesystem within Angr, treating file contents as memory-mapped symbolic regions, to simulate user input read from files (e.g., `fread`, `read`).",
+      "difficulty": "advanced",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C05"
+      ],
+      "misconceptions": [
+        "Believing `state.memory.store()` directly applies to file content (requires `SimFile` and `state.fs`)",
+        "Forgetting to specify the filename and insert the symbolic file into the simulated filesystem."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.92,
+      "relevance_score": 0.89,
+      "source": "CTF_copy.pdf [page 48-50]",
+      "learning_objective": "Configure Angr's simulated filesystem to provide symbolic input from files for symbolic execution.",
+      "connections": [
+        {
+          "to": "C05",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C16",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P15",
+          "name": "Procedural Steps: Injecting Symbols via the File System",
+          "label": "Procedural Steps",
+          "description": "Procedure to set up a symbolic file in Angr's simulated filesystem and inject its contents as symbolic values.",
+          "difficulty": "advanced",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrect `filename` for `SimFile` (must match what the binary expects)",
+            "Not inserting the `SimFile` object into `initial_state.fs`",
+            "Incorrectly calculating `symbolic_file_size_bytes`."
+          ],
+          "success_criteria": [
+            "Symbolic file created and inserted correctly",
+            "Symbolic execution accesses file content as symbolic data."
+          ],
+          "error_patterns": [
+            "`FileNotFoundError` in simulated environment",
+            "Program reads concrete (empty) file content instead of symbolic."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P15-step1",
+              "name": "Step 1: Identify start address, filename, and expected file size",
+              "label": "Procedural Step 1",
+              "hint": "Locate the address just before the program calls `fopen()` or similar file opening function. Identify the `filename` the program expects (e.g., `/tmp/hello.txt` or a random string like `FOQVSBZB.txt`) and the size of data it attempts to `fread()`.",
+              "source": "CTF_copy.pdf [page 52]",
+              "children": [
+                {
+                  "id": "P15-step2",
+                  "name": "Step 2: Create a blank state and symbolic bitvector for file content",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x80488d3 # Before fopen\ninitial_state = project.factory.blank_state(addr=start_address)\nfilename = b'FOQVSBZB.txt' # Must be bytes\nsymbolic_file_size_bytes = 64\npassword = claripy.BVS('password', symbolic_file_size_bytes * 8)",
+                  "hint": "The `filename` parameter for `SimFile` typically expects a byte string. The bitvector size should be the file size in bytes multiplied by 8.",
+                  "source": "CTF_copy.pdf [page 53]",
+                  "children": [
+                    {
+                      "id": "P15-step3",
+                      "name": "Step 3: Create a `SimFile` and insert it into the simulated filesystem",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "password_file = angr.storage.SimFile(filename, content=password)\ninitial_state.fs.insert(filename, password_file)",
+                      "hint": "`angr.storage.SimFile` creates a file object. `initial_state.fs.insert()` makes this file available to the simulated program under the specified `filename`.",
+                      "source": "CTF_copy.pdf [page 53]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A15",
+          "name": "Assessment Guide: Injecting Symbols via the File System",
+          "label": "Assessment 15",
+          "linked_challenges": [
+            "07_angr_symbolic_file"
+          ],
+          "objectives": [
+            "Understand Angr's simulated filesystem and `SimFile` objects",
+            "Correctly create and insert a symbolic file for program input",
+            "Determine the required filename and size for symbolic file injection."
+          ],
+          "question_prompts": [
+            {
+              "question": "How does Angr's simulated file system prevent conflicts with the host operating system's files?"
+            },
+            {
+              "question": "If a program reads 128 bytes from a file named `/etc/passwd`, how would you set up the `SimFile` and symbolic bitvector?"
+            },
+            {
+              "question": "What would happen if you create a `SimFile` with a `filename` that doesn't match what `fopen()` expects in the binary?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies the filename and size the binary expects",
+            "Provides accurate `SimFile` creation and `state.fs.insert` calls",
+            "Explains the conceptual separation of simulated vs. real filesystem memory."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "advanced",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C16",
+      "name": "Solving CTF 07_angr_symbolic_file",
+      "label": "Concept 16",
+      "definition": "Applying manual symbolic file system injection to solve a CTF challenge where password data is read from a file with a random name, after being stored and retrieved.",
+      "difficulty": "advanced",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C15",
+        "C06"
+      ],
+      "misconceptions": [
+        "Struggling to identify the specific random filename used by the binary",
+        "Incorrectly calculating the exact size of the file content that is read by `fread()`."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.93,
+      "relevance_score": 0.9,
+      "source": "CTF_copy.pdf [page 51-53]",
+      "learning_objective": "Solve the '07_angr_symbolic_file' CTF by simulating symbolic file input and guiding Angr to a success state.",
+      "connections": [
+        {
+          "to": "C15",
+          "relation": "IMPLEMENTED_BY"
+        },
+        {
+          "to": "C06",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P16",
+          "name": "Procedural Steps: Solving 07_angr_symbolic_file",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 07_angr_symbolic_file CTF challenge using manual symbolic file system injection.",
+          "difficulty": "advanced",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Providing an incorrect `filename` (it must match exactly, including casing) or `symbolic_file_size_bytes`",
+            "Forgetting to wrap the filename in `b''` to make it a byte string."
+          ],
+          "success_criteria": [
+            "Angr finds a solution state",
+            "The concretized password string is correct when decoded."
+          ],
+          "error_patterns": [
+            "File not found errors during symbolic execution",
+            "Incorrect password or no solution found if the file content size is wrong."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P16-step1",
+              "name": "Step 1: Identify start address, filename, and symbolic file size",
+              "label": "Procedural Step 1",
+              "hint": "Analyze the binary to determine the `start_address` (e.g., `0x80488d3`) before `fopen`. Identify the exact filename string (e.g., `FOQVSBZB.txt`) that the program attempts to open, and the number of bytes it `fread()`s (e.g., 64 bytes).",
+              "source": "CTF_copy.pdf [page 52, 53]",
+              "children": [
+                {
+                  "id": "P16-step2",
+                  "name": "Step 2: Create a blank state, symbolic bitvector, and `SimFile`",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x80488d3\ninitial_state = project.factory.blank_state(addr=start_address)\nfilename = b'FOQVSBZB.txt'\nsymbolic_file_size_bytes = 64\npassword = claripy.BVS('password', symbolic_file_size_bytes * 8)\npassword_file = angr.storage.SimFile(filename, content=password)",
+                  "hint": "The filename must be a byte string. The bitvector for `password` should match the `symbolic_file_size_bytes` in total bits.",
+                  "source": "CTF_copy.pdf [page 53]",
+                  "children": [
+                    {
+                      "id": "P16-step3",
+                      "name": "Step 3: Insert the symbolic file and run simulation",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "initial_state.fs.insert(filename, password_file)\nsimulation = project.factory.simgr(initial_state)\nsimulation.explore(find=is_successful, avoid=should_abort)\n# ... retrieve solution using solution_state.solver.eval()",
+                      "hint": "Ensure `initial_state.fs.insert` makes the file available. Use previously defined `is_successful`/`should_abort` functions or direct addresses.",
+                      "source": "CTF_copy.pdf [page 53]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A16",
+          "name": "Assessment Guide: Solving 07_angr_symbolic_file",
+          "label": "Assessment 16",
+          "linked_challenges": [
+            "07_angr_symbolic_file"
+          ],
+          "objectives": [
+            "Accurately determine the target filename and file read size from binary analysis",
+            "Correctly configure Angr's simulated filesystem for symbolic input",
+            "Retrieve and decode the symbolic file content solution."
+          ],
+          "question_prompts": [
+            {
+              "question": "If `fread` read only 32 bytes instead of 64, how would you adjust your `password` bitvector and `symbolic_file_size_bytes`?"
+            },
+            {
+              "question": "Describe how you would handle a scenario where the filename itself is symbolic (e.g., read from stdin) before `fopen` is called."
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies `filename` (`FOQVSBZB.txt`) and `symbolic_file_size_bytes` (64)",
+            "Provides a working Angr script that successfully injects symbolic file content and solves for the password",
+            "The retrieved solution is correctly decoded to a string."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "advanced",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C17",
+      "name": "Understanding Symbolic Execution State Explosion",
+      "label": "Concept 17",
+      "definition": "Recognizing the exponential growth of execution paths (state explosion) in symbolic execution, particularly when encountering many conditional branches (e.g., character-by-character string comparisons or loops), and the resulting performance degradation.",
+      "difficulty": "beginner",
+      "bloom_level": "Understand",
+      "prerequisites": [
+        "C02",
+        "C05"
+      ],
+      "misconceptions": [
+        "Believing symbolic execution can solve any problem efficiently, regardless of path complexity",
+        "Underestimating the impact of simple loops with branches on state count."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.95,
+      "relevance_score": 0.93,
+      "source": "CTF_copy.pdf [page 54-55]",
+      "learning_objective": "Identify program constructs that lead to state explosion in symbolic execution and explain why these constructs are problematic.",
+      "connections": [
+        {
+          "to": "C02",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C05",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C18",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C20",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C22",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P17",
+          "name": "Procedural Steps: Identifying State Explosion",
+          "label": "Procedural Steps",
+          "description": "Conceptual demonstration of how branching in code leads to an exponential increase in symbolic states.",
+          "difficulty": "beginner",
+          "bloom_level": "Analyze",
+          "common_errors": [
+            "Miscalculating the number of potential paths",
+            "Failing to see how simple comparisons in a loop compound complexity."
+          ],
+          "success_criteria": [
+            "Correctly identify the number of branches/states for a given code snippet",
+            "Explain the mechanism of state growth."
+          ],
+          "error_patterns": [
+            "Underestimating the scale of state explosion."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P17-step1",
+              "name": "Step 1: Analyze code for branching operations",
+              "label": "Procedural Step 1",
+              "code_snippet": "def check_all_Z(user_input):\n  num_Z = 0\n  for i in range(0, 16):\n    if user_input[i] == 'Z':\n      num_Z += 1\n    else:\n      pass\n  return num_Z == 16",
+              "hint": "Look for `if`/`else` statements, loops, or complex comparisons, especially those iterating over symbolic input.",
+              "source": "CTF_copy.pdf [page 55]",
+              "children": [
+                {
+                  "id": "P17-step2",
+                  "name": "Step 2: Calculate the number of paths generated",
+                  "label": "Procedural Step 2",
+                  "hint": "If each branch doubles the number of states, and a loop has `N` iterations, the total paths can be `2^N`. For the `check_all_Z` example, with 16 iterations and a branch in each, it's `2^16` paths.",
+                  "source": "CTF_copy.pdf [page 55]",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A17",
+          "name": "Assessment Guide: State Explosion",
+          "label": "Assessment 17",
+          "linked_challenges": [],
+          "objectives": [
+            "Define state explosion in symbolic execution terms",
+            "Identify common code patterns causing state explosion",
+            "Quantify the number of states for a given branching structure."
+          ],
+          "question_prompts": [
+            {
+              "question": "How many paths would be generated if a function iterates 20 times, and each iteration contains a conditional branch on symbolic input?"
+            },
+            {
+              "question": "Why is `strcmp`-based comparison problematic for symbolic execution when compared character by character?"
+            },
+            {
+              "question": "What are the practical consequences of state explosion on symbolic execution tools?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly calculates path counts for various branching scenarios",
+            "Explains the impact of `strcmp` and similar functions on state space",
+            "Articulates the performance and resource implications of state explosion."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C18",
+      "name": "Mitigating State Explosion with Constraints",
+      "label": "Concept 18",
+      "definition": "The technique of manually adding constraints to a symbolic state at specific execution locations to force a desired path and bypass computationally expensive or branching-heavy code, thus avoiding state explosion.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C17",
+        "C05"
+      ],
+      "misconceptions": [
+        "Believing constraints can be added at any point without impacting reachability (constraints must be consistent with the current path)",
+        "Over-constraining, making the path unsatisfiable."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.94,
+      "relevance_score": 0.91,
+      "source": "CTF_copy.pdf [page 56-57]",
+      "learning_objective": "Apply manual constraints to a symbolic state at strategic points to prune the state space and guide execution.",
+      "connections": [
+        {
+          "to": "C17",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C05",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C19",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P18",
+          "name": "Procedural Steps: Adding Constraints for State Explosion Mitigation",
+          "label": "Procedural Steps",
+          "description": "Procedure to add a manual constraint to a specific symbolic state at a chosen program address.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Adding constraints to the wrong symbolic variable or at the wrong address",
+            "Using an incorrect desired value (e.g., string vs. bytes)."
+          ],
+          "success_criteria": [
+            "Constraint successfully added to the state",
+            "Symbolic execution proceeds to a solution path without exploding."
+          ],
+          "error_patterns": [
+            "`ConstraintUnsatError` if the constraint contradicts the path",
+            "No paths found if the constraint is unreachably placed."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P18-step1",
+              "name": "Step 1: Identify the address to add the constraint",
+              "label": "Procedural Step 1",
+              "hint": "Locate an address just before the problematic, state-exploding code block. This is where you want to pause execution and apply your constraint.",
+              "source": "CTF_copy.pdf [page 57, 62]",
+              "children": [
+                {
+                  "id": "P18-step2",
+                  "name": "Step 2: Explore to the constraint address",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "address_to_check_constraint = 0x8048XXX\nsimulation.explore(find=address_to_check_constraint)",
+                  "hint": "Use `simgr.explore(find=...)` to guide execution to the desired point. You'll then operate on the states in `simulation.found`.",
+                  "source": "CTF_copy.pdf [page 62]",
+                  "children": [
+                    {
+                      "id": "P18-step3",
+                      "name": "Step 3: Load the symbolic bitvector to constrain",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "solution_state = simulation.found[0]\nconstrained_parameter_address = 0x804aXXX # Address of string buffer\nconstrained_parameter_size_bytes = 16\nconstrained_parameter_bitvector = solution_state.memory.load(\n  constrained_parameter_address,\n  constrained_parameter_size_bytes\n)",
+                      "hint": "From the `solution_state`, use `state.memory.load()` (or `state.regs.<reg>`) to get the symbolic value that needs to be constrained.",
+                      "source": "CTF_copy.pdf [page 62]",
+                      "children": [
+                        {
+                          "id": "P18-step4",
+                          "name": "Step 4: Add the constraint to the state",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "constrained_parameter_desired_value = b'AABBCCDDEEFFGGHH' # encoded string\nsolution_state.add_constraints(\n  constrained_parameter_bitvector == constrained_parameter_desired_value\n)",
+                          "hint": "The `add_constraints()` method takes a Claripy expression. Ensure the desired value is correctly typed (e.g., `b''` for byte strings).",
+                          "source": "CTF_copy.pdf [page 62]",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A18",
+          "name": "Assessment Guide: Constraints for State Explosion",
+          "label": "Assessment 18",
+          "linked_challenges": [
+            "08_angr_constraints"
+          ],
+          "objectives": [
+            "Explain how constraints mitigate state explosion",
+            "Identify strategic points in code to apply constraints",
+            "Formulate and apply correct symbolic constraints using `add_constraints()`."
+          ],
+          "question_prompts": [
+            {
+              "question": "Why is it important to add constraints *before* a problematic code block, rather than after?"
+            },
+            {
+              "question": "What happens if you add a constraint that contradicts existing constraints on a symbolic path?"
+            },
+            {
+              "question": "How would you constrain a 32-bit symbolic integer `x` to be `> 100` and `< 200`?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies optimal constraint application points",
+            "Provides accurate `state.add_constraints()` calls with appropriate `claripy` expressions",
+            "Explains the impact of constraints on path exploration and satisfiability."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C19",
+      "name": "Solving CTF 08_angr_constraints",
+      "label": "Concept 19",
+      "definition": "Applying manual constraint injection to solve a CTF challenge that combines a complex initial function with a state-exploding character-by-character string comparison, bypassing the problematic check.",
+      "difficulty": "advanced",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C18",
+        "C06",
+        "C11"
+      ],
+      "misconceptions": [
+        "Misidentifying the address of the buffer to constrain or the exact target string",
+        "Forgetting to re-run symbolic execution after adding the constraint."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.95,
+      "relevance_score": 0.92,
+      "source": "CTF_copy.pdf [page 58-62]",
+      "learning_objective": "Solve the '08_angr_constraints' CTF by strategically adding constraints to force a desired output, bypassing state explosion issues.",
+      "connections": [
+        {
+          "to": "C18",
+          "relation": "IMPLEMENTED_BY"
+        },
+        {
+          "to": "C06",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C11",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P19",
+          "name": "Procedural Steps: Solving 08_angr_constraints",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 08_angr_constraints CTF challenge using manual constraint injection.",
+          "difficulty": "advanced",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrectly identifying `address_to_check_constraint` (before the `check_equals` call)",
+            "Using the wrong `constrained_parameter_desired_value` (must be the expected input, not the internal reference string)."
+          ],
+          "success_criteria": [
+            "Angr exploration successfully finds a state at the constraint address",
+            "The added constraint leads to a satisfiable solution for the input."
+          ],
+          "error_patterns": [
+            "No states found at `address_to_check_constraint`",
+            "`ConstraintUnsatError` after adding the constraint."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P19-step1",
+              "name": "Step 1: Identify key addresses and the desired constraint value",
+              "label": "Procedural Step 1",
+              "hint": "Analyze the binary: `start_address` (after `scanf`), `password_address` (e.g., `0x804a050`), `address_to_check_constraint` (before `check_equals_XXX` call, e.g., `0x8048671`). Identify the desired value for the buffer after `complex_function` (e.g., `BWYRUBQCMVSBRGFU`).",
+              "source": "CTF_copy.pdf [page 61, 62]",
+              "children": [
+                {
+                  "id": "P19-step2",
+                  "name": "Step 2: Set up initial state and explore to constraint point",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x08048627 # After scanf\ninitial_state = project.factory.blank_state(addr=start_address)\npassword = claripy.BVS('password', 16 * 8) # 16 bytes\npassword_address = 0x804a050\ninitial_state.memory.store(password_address, password)\n\nsimulation = project.factory.simgr(initial_state)\naddress_to_check_constraint = 0x08048671 # Before check_equals_XXX call\nsimulation.explore(find=address_to_check_constraint)",
+                  "hint": "Use `blank_state` for a precise start. Inject `password` symbolic into its buffer. Then `explore` only up to the point *before* the explosion-causing `check_equals_XXX` function.",
+                  "source": "CTF_copy.pdf [page 61, 62]",
+                  "children": [
+                    {
+                      "id": "P19-step3",
+                      "name": "Step 3: Load the parameter and add the constraint",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "if simulation.found:\n  solution_state = simulation.found[0]\n  constrained_parameter_address = 0x804a050 # The password buffer after complex_function\n  constrained_parameter_size_bytes = 16\n  constrained_parameter_bitvector = solution_state.memory.load(\n  constrained_parameter_address,\n  constrained_parameter_size_bytes\n  )\n  constrained_parameter_desired_value = b'BWYRUBQCMVSBRGFU' # encoded string\n  solution_state.add_constraints(\n  constrained_parameter_bitvector == constrained_parameter_desired_value\n  )",
+                      "hint": "The `constrained_parameter_bitvector` is the symbolic state of the password buffer *after* `complex_function` has run. Constrain this to the *target* string `BWYRUBQCMVSBRGFU`.",
+                      "source": "CTF_copy.pdf [page 61, 62]",
+                      "children": [
+                        {
+                          "id": "P19-step4",
+                          "name": "Step 4: Concretize the input password",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "solution = solution_state.solver.eval(password, cast_to=bytes).decode()",
+                          "hint": "The constraint was applied to the *output* of `complex_function`. Now, use the solver to find the *original input* `password` that would lead to that constrained output.",
+                          "source": "CTF_copy.pdf [page 62]",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A19",
+          "name": "Assessment Guide: Solving 08_angr_constraints",
+          "label": "Assessment 19",
+          "linked_challenges": [
+            "08_angr_constraints"
+          ],
+          "objectives": [
+            "Identify the problematic code segment causing state explosion",
+            "Correctly determine the target string to constrain the program's internal state",
+            "Apply `add_constraints()` to the correct symbolic buffer and retrieve the initial input."
+          ],
+          "question_prompts": [
+            {
+              "question": "What is the key insight gained by adding a constraint to the *output* of `complex_function` instead of directly constraining the *input* `password`?"
+            },
+            {
+              "question": "If `simulation.found` is empty after `explore(find=address_to_check_constraint)`, what might be the problem?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies the `start_address` (`0x08048627`) and `address_to_check_constraint` (`0x08048671`)",
+            "Uses the correct `constrained_parameter_desired_value` (`BWYRUBQCMVSBRGFU`)",
+            "Provides a working Angr script that successfully solves the challenge and retrieves the original password."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "advanced",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C20",
+      "name": "Mitigating State Explosion with Function Hooks",
+      "label": "Concept 20",
+      "definition": "The technique of replacing a segment of problematic, state-exploding machine code (e.g., a complex function call or loop) with a custom Python function (a 'hook') that implements equivalent, simplified logic, thereby avoiding full symbolic execution of the original code.",
+      "difficulty": "intermediate",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C17",
+        "C05"
+      ],
+      "misconceptions": [
+        "Believing hooks are only for complex functions (can be any instruction sequence)",
+        "Forgetting to specify the `length` of the instruction bytes to skip with the hook.",
+        "Not understanding how to set the return value (e.g., in `eax`) for the hooked function."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.94,
+      "relevance_score": 0.91,
+      "source": "CTF_copy.pdf [page 63-67]",
+      "learning_objective": "Implement function hooks in Angr to replace native binary code with custom Python logic, simplifying symbolic execution paths.",
+      "connections": [
+        {
+          "to": "C17",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C05",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C21",
+          "relation": "PREREQUISITE_FOR"
+        },
+        {
+          "to": "C22",
+          "relation": "GENERALIZES_TO"
+        }
+      ],
+      "children": [
+        {
+          "id": "P20",
+          "name": "Procedural Steps: Implementing Function Hooks",
+          "label": "Procedural Steps",
+          "description": "Procedure to define and apply a function hook in Angr, replacing a section of binary code with custom Python logic.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrect `check_equals_called_address` or `instruction_to_skip_length`",
+            "Misinterpreting which registers hold function parameters or return values",
+            "Failing to set the return value in `state.regs.eax`."
+          ],
+          "success_criteria": [
+            "Hook is successfully registered and invoked",
+            "Replacement function's logic is correctly integrated into symbolic execution."
+          ],
+          "error_patterns": [
+            "Original binary code is still executed instead of the hook",
+            "Incorrect return value from hook leads to wrong paths."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P20-step1",
+              "name": "Step 1: Identify the address and length of code to hook",
+              "label": "Procedural Step 1",
+              "hint": "Locate the exact instruction address of the call (e.g., `0x8048781` for `call check_all_Z`) you want to replace. Determine its length in bytes (e.g., 5 bytes for a typical `call` instruction).",
+              "source": "CTF_copy.pdf [page 64, 66]",
+              "children": [
+                {
+                  "id": "P20-step2",
+                  "name": "Step 2: Define a Python replacement function",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "def replacement_check_all_Z(state):\n  user_input_buffer_address = 0x804a420\n  user_input_string = state.memory.load(user_input_buffer_address, 16)\n  state.regs.eax = claripy.If(\n    user_input_string == b'ZZZZZZZZZZZZZZZZ',\n    claripy.BVV(1, 32),\n    claripy.BVV(0, 32)\n  )",
+                  "hint": "This function takes the current `state` as an argument. It should mimic the *effect* of the original binary code, including reading parameters (from stack/registers) and setting return values (e.g., `state.regs.eax`).",
+                  "source": "CTF_copy.pdf [page 65, 70]",
+                  "children": [
+                    {
+                      "id": "P20-step3",
+                      "name": "Step 3: Register the hook with Angr",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "check_equals_called_address = 0x8048781\ninstruction_to_skip_length = 5\n@project.hook(check_equals_called_address, length=instruction_to_skip_length)\ndef replacement_check_all_Z(state):\n  # ... (function body as above)",
+                      "hint": "The `@project.hook` decorator (or `project.hook(addr, length, func)`) registers your Python function to be executed when the specified address is reached. `length` tells Angr how many original instruction bytes to skip.",
+                      "source": "CTF_copy.pdf [page 66, 70]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A20",
+          "name": "Assessment Guide: Function Hooks",
+          "label": "Assessment 20",
+          "linked_challenges": [
+            "09_angr_hooks"
+          ],
+          "objectives": [
+            "Explain the purpose and mechanics of function hooks in Angr",
+            "Accurately determine the address and length of instructions to hook",
+            "Write Python hook functions that correctly simulate binary behavior, including parameter parsing and return value setting."
+          ],
+          "question_prompts": [
+            {
+              "question": "What is the primary benefit of using a hook over adding constraints to mitigate state explosion?"
+            },
+            {
+              "question": "If a hooked function expects two integer arguments on the stack and returns a boolean in `eax`, how would your Python hook function access those arguments and set the return value?"
+            },
+            {
+              "question": "What happens if the `length` parameter in `project.hook()` is set incorrectly (e.g., too short or too long)?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Clearly explains the advantages of hooks for state explosion",
+            "Identifies correct `hook` address and `length` for a given binary snippet",
+            "Provides a hook function that accurately mimics target binary logic, including I/O via `state.memory.load` or `state.regs`."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C21",
+      "name": "Solving CTF 09_angr_hooks",
+      "label": "Concept 21",
+      "definition": "Applying function hooking to solve a CTF challenge where a `check_equals` function causes state explosion, by replacing its complex logic with a simplified Python equivalent.",
+      "difficulty": "advanced",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C20",
+        "C06",
+        "C11"
+      ],
+      "misconceptions": [
+        "Misidentifying the specific call instruction to hook (not the function's entry point, but the call *to* it)",
+        "Struggling with the conditional `claripy.If` for setting the symbolic return value."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.94,
+      "relevance_score": 0.9,
+      "source": "CTF_copy.pdf [page 68-70]",
+      "learning_objective": "Solve the '09_angr_hooks' CTF by implementing a custom Angr hook to bypass a state-exploding string comparison.",
+      "connections": [
+        {
+          "to": "C20",
+          "relation": "IMPLEMENTED_BY"
+        },
+        {
+          "to": "C06",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C11",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P21",
+          "name": "Procedural Steps: Solving 09_angr_hooks",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 09_angr_hooks CTF challenge using a function hook.",
+          "difficulty": "advanced",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrect `check_equals_called_address` or `instruction_to_skip_length` for the call instruction",
+            "Logical errors in the `claripy.If` condition or return values within the hook."
+          ],
+          "success_criteria": [
+            "Hook successfully replaces the binary's `check_equals` call",
+            "Angr finds a solution state, and the concretized password is correct."
+          ],
+          "error_patterns": [
+            "State explosion still occurs, indicating hook was not properly applied",
+            "Incorrect password found due to faulty hook logic."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P21-step1",
+              "name": "Step 1: Identify the call instruction to `check_equals_...`",
+              "label": "Procedural Step 1",
+              "hint": "Using a disassembler, find the address of the `call` instruction to `check_equals_...` (e.g., `0x80486ca`) and its byte length (typically 5 bytes). Also identify the `user_input_buffer_address` (e.g., `0x804a044`) and the `check_against_string` (e.g., `WQNDNKKWAWOLXBAC`).",
+              "source": "CTF_copy.pdf [page 69, 70]",
+              "children": [
+                {
+                  "id": "P21-step2",
+                  "name": "Step 2: Create a blank state and symbolic buffer, then define and apply the hook",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x08048627 # After scanf\ninitial_state = project.factory.blank_state(addr=start_address)\nuser_input = claripy.BVS('user_input', 16 * 8) # Assuming 16 bytes\nuser_input_buffer_address = 0x804a044\ninitial_state.memory.store(user_input_buffer_address, user_input)\n\ncheck_equals_called_address = 0x080486ca\ninstruction_to_skip_length = 5\ncheck_against_string = b'AABBCCDDEEFFGGHH' # Example string\n\n@project.hook(check_equals_called_address, length=instruction_to_skip_length)\ndef skip_check_equals_(state):\n  # Load current symbolic string from memory\n  current_user_input_string = state.memory.load(\n    user_input_buffer_address,\n    16 # 16 bytes\n  )\n  # Perform symbolic comparison and set EAX (return value)\n  state.regs.eax = claripy.If(\n    current_user_input_string == check_against_string,\n    claripy.BVV(1, 32),\n    claripy.BVV(0, 32)\n  )",
+                  "hint": "The hook needs to load the symbolic `user_input_string` from the buffer *in the current state* (which has been processed by `complex_function`) and compare it against the *target* string. The result is placed in `state.regs.eax`.",
+                  "source": "CTF_copy.pdf [page 70]",
+                  "children": [
+                    {
+                      "id": "P21-step3",
+                      "name": "Step 3: Run simulation and concretize solution",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "simulation = project.factory.simgr(initial_state)\nsimulation.explore(find=is_successful, avoid=should_abort)\n# ... retrieve solution for 'user_input' BVS",
+                      "hint": "The `is_successful` and `should_abort` functions or addresses should point to the final success/failure points of the program.",
+                      "source": "CTF_copy.pdf [page 70]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A21",
+          "name": "Assessment Guide: Solving 09_angr_hooks",
+          "label": "Assessment 21",
+          "linked_challenges": [
+            "09_angr_hooks"
+          ],
+          "objectives": [
+            "Accurately identify the call site and length for hooking `check_equals`",
+            "Implement symbolic string comparison within a hook using `claripy.If`",
+            "Correctly set the return value of the hooked function in `state.regs.eax`."
+          ],
+          "question_prompts": [
+            {
+              "question": "How would you ensure that your hook function correctly gets the `user_input_buffer_address` and `user_input_buffer_length` dynamically if they vary?"
+            },
+            {
+              "question": "What is the equivalent Python concrete operation for `claripy.If(cond, BVV(1,32), BVV(0,32))`?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies `check_equals_called_address` (`0x080486ca`) and `instruction_to_skip_length` (5)",
+            "Provides a working Angr script with a correct hook function that solves the challenge",
+            "The hook correctly loads the symbolic buffer, performs the comparison, and sets `eax` symbolically."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "advanced",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C22",
+      "name": "Mitigating State Explosion with SimProcedures",
+      "label": "Concept 22",
+      "definition": "Understanding Angr's `SimProcedure` framework as 'syntactic sugar' for function hooks, providing a more structured and Pythonic way to replace entire binary functions with Python summaries, especially useful for complex or frequently called library functions.",
+      "difficulty": "intermediate",
+      "bloom_level": "Understand",
+      "prerequisites": [
+        "C17",
+        "C20"
+      ],
+      "misconceptions": [
+        "Confusing `SimProcedure` with a basic `project.hook` (SimProcedures handle function calling conventions automatically)",
+        "Believing SimProcedures are only for 'known' library functions (can be used for any target function)."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.95,
+      "relevance_score": 0.93,
+      "source": "CTF_copy.pdf [page 71-75]",
+      "learning_objective": "Utilize `SimProcedure` to replace problematic binary functions with simplified Python models, automatically handling function calling conventions.",
+      "connections": [
+        {
+          "to": "C17",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C20",
+          "relation": "EXTENDS_TO"
+        },
+        {
+          "to": "C23",
+          "relation": "PREREQUISITE_FOR"
+        }
+      ],
+      "children": [
+        {
+          "id": "P22",
+          "name": "Procedural Steps: Implementing SimProcedures",
+          "label": "Procedural Steps",
+          "description": "Procedure to create and apply an Angr `SimProcedure` to replace a problematic binary function with a Python summary.",
+          "difficulty": "intermediate",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrect function prototype in the `run` method (e.g., missing parameters or wrong types)",
+            "Failing to use `claripy` for symbolic comparisons within the SimProcedure",
+            "Not correctly identifying the `check_equals_symbol` to hook."
+          ],
+          "success_criteria": [
+            "SimProcedure successfully replaces the target function",
+            "Symbolic execution proceeds with simplified logic and finds solutions."
+          ],
+          "error_patterns": [
+            "Program crashes or hangs due to incorrect SimProcedure implementation",
+            "Incorrect paths taken if SimProcedure logic is flawed."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P22-step1",
+              "name": "Step 1: Identify the function to hook by name and its prototype",
+              "label": "Procedural Step 1",
+              "hint": "Use `objdump` or Ghidra to find the exact symbol name of the function (e.g., `check_equals_WQNDNKKWAWOLXBAC`) and understand its calling convention (parameters, return type).",
+              "source": "CTF_copy.pdf [page 76, 78]",
+              "children": [
+                {
+                  "id": "P22-step2",
+                  "name": "Step 2: Create a custom `SimProcedure` class",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "import angr, claripy\n\nclass ReplacementCheckEquals(angr.SimProcedure):\n  def run(self, to_check, length): # Match the prototype of the original function\n    # ... function body ...",
+                  "hint": "Subclass `angr.SimProcedure`. The `run` method should match the parameters of the original binary function. `self` refers to the SimProcedure instance, `state` can be accessed via `self.state`.",
+                  "source": "CTF_copy.pdf [page 77, 78]",
+                  "children": [
+                    {
+                      "id": "P22-step3",
+                      "name": "Step 3: Implement symbolic logic within `run` method",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "class ReplacementCheckEquals(angr.SimProcedure):\n  def run(self, to_check, length):\n    user_input_string = self.state.memory.load(to_check, length) # Load parameter from memory\n    check_against_string = b'WQNDNKKWAWOLXBAC'\n    return claripy.If(\n      user_input_string == check_against_string,\n      claripy.BVV(1, 32),\n      claripy.BVV(0, 32)\n    )",
+                      "hint": "Inside `run`, access parameters directly. Use `self.state.memory.load()` to get symbolic values from memory locations passed as parameters. Use `claripy.If` for conditional symbolic returns. The `return` statement in `run` sets the function's symbolic return value.",
+                      "source": "CTF_copy.pdf [page 78]",
+                      "children": [
+                        {
+                          "id": "P22-step4",
+                          "name": "Step 4: Hook the function symbol with your `SimProcedure`",
+                          "label": "Procedural Step 4",
+                          "code_snippet": "check_equals_symbol = 'check_equals_WQNDNKKWAWOLXBAC'\nproject.hook_symbol(check_equals_symbol, ReplacementCheckEquals())",
+                          "hint": "`project.hook_symbol()` replaces *all calls* to a function by its symbol name with your `SimProcedure` instance.",
+                          "source": "CTF_copy.pdf [page 78]",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A22",
+          "name": "Assessment Guide: SimProcedures",
+          "label": "Assessment 22",
+          "linked_challenges": [
+            "10_angr_simprocedures"
+          ],
+          "objectives": [
+            "Explain the difference and advantages of `SimProcedure` over basic `project.hook`",
+            "Define a custom `SimProcedure` class with a correct `run` method signature",
+            "Implement symbolic logic within a `SimProcedure` to accurately summarize binary function behavior."
+          ],
+          "question_prompts": [
+            {
+              "question": "When would you choose `SimProcedure` over `project.hook()` for mitigating state explosion?"
+            },
+            {
+              "question": "If a binary function takes a pointer to a string and an integer length, how would the `run` method of your `SimProcedure` be defined, and how would you access those parameters?"
+            },
+            {
+              "question": "What is the primary benefit of `SimProcedure` automatically handling function invocation aspects like pushing/popping parameters and return addresses?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Clearly articulates the benefits of SimProcedures, especially for calling conventions",
+            "Provides a correct `SimProcedure` class structure with an accurate `run` method prototype",
+            "The `run` method correctly uses `self.state` and `claripy` for symbolic operations and returns the appropriate symbolic value."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "intermediate",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "C23",
+      "name": "Solving CTF 10_angr_simprocedures",
+      "label": "Concept 23",
+      "definition": "Applying `SimProcedure` to solve a CTF challenge where a state-exploding `check_equals` function is called hundreds of times, by providing a single, efficient Python summary for the function.",
+      "difficulty": "advanced",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "C22",
+        "C06",
+        "C11"
+      ],
+      "misconceptions": [
+        "Still trying to hook individual call sites instead of the function symbol itself",
+        "Incorrectly defining the `SimProcedure`'s `run` method signature to match the target function."
+      ],
+      "visibility": [
+        "supervisor_agent",
+        "instructor"
+      ],
+      "validation_status": "verified",
+      "confidence": 0.95,
+      "relevance_score": 0.92,
+      "source": "CTF_copy.pdf [page 76-78]",
+      "learning_objective": "Solve the '10_angr_simprocedures' CTF by implementing a `SimProcedure` to replace a repeatedly called, state-exploding binary function.",
+      "connections": [
+        {
+          "to": "C22",
+          "relation": "IMPLEMENTED_BY"
+        },
+        {
+          "to": "C06",
+          "relation": "DEPENDS_ON"
+        },
+        {
+          "to": "C11",
+          "relation": "DEPENDS_ON"
+        }
+      ],
+      "children": [
+        {
+          "id": "P23",
+          "name": "Procedural Steps: Solving 10_angr_simprocedures",
+          "label": "Procedural Steps",
+          "description": "Steps to solve the 10_angr_simprocedures CTF challenge using a custom `SimProcedure`.",
+          "difficulty": "advanced",
+          "bloom_level": "Apply",
+          "common_errors": [
+            "Incorrectly specifying the `check_equals_symbol` name (case-sensitive)",
+            "Errors in the `run` method's parameter list, leading to incorrect argument handling."
+          ],
+          "success_criteria": [
+            "The `SimProcedure` is successfully hooked to the target function",
+            "Angr finds a solution state efficiently, and the concretized password is correct."
+          ],
+          "error_patterns": [
+            "Program executes slowly or crashes, indicating `SimProcedure` not applied or faulty",
+            "Incorrect password due to flawed logic in `SimProcedure`."
+          ],
+          "progress_metric": {
+            "completed": false,
+            "percent_done": 0
+          },
+          "children": [
+            {
+              "id": "P23-step1",
+              "name": "Step 1: Identify the name and prototype of the problematic function",
+              "label": "Procedural Step 1",
+              "hint": "Use `objdump` to list functions and find the symbol name of the `check_equals_...` function (e.g., `check_equals_WQNDNKKWAWOLXBAC`). Determine its parameters (e.g., a pointer `to_check` and an integer `length`).",
+              "source": "CTF_copy.pdf [page 76, 78]",
+              "children": [
+                {
+                  "id": "P23-step2",
+                  "name": "Step 2: Create a blank state, symbolic buffer, and custom `SimProcedure`",
+                  "label": "Procedural Step 2",
+                  "code_snippet": "start_address = 0x08048627 # After scanf\ninitial_state = project.factory.blank_state(addr=start_address)\nuser_input = claripy.BVS('user_input', 16 * 8) # Assuming 16 bytes\nuser_input_buffer_address = 0x804a044 # Location of the input buffer\ninitial_state.memory.store(user_input_buffer_address, user_input)\n\nclass ReplacementCheckEquals(angr.SimProcedure):\n  def run(self, to_check_ptr, length):\n    # Load the symbolic string from the pointer passed as argument\n    current_user_input_string = self.state.memory.load(to_check_ptr, length)\n    check_against_string = b'WQNDNKKWAWOLXBAC' # The actual string it's checking against\n    return claripy.If(\n      current_user_input_string == check_against_string,\n      claripy.BVV(1, 32),\n      claripy.BVV(0, 32)\n    )",
+                  "hint": "The `run` method's arguments (`to_check_ptr`, `length`) should correspond to how the binary function expects parameters. `to_check_ptr` will be a symbolic address.",
+                  "source": "CTF_copy.pdf [page 78]",
+                  "children": [
+                    {
+                      "id": "P23-step3",
+                      "name": "Step 3: Hook the function symbol with your `SimProcedure` and run simulation",
+                      "label": "Procedural Step 3",
+                      "code_snippet": "check_equals_symbol = 'check_equals_WQNDNKKWAWOLXBAC'\nproject.hook_symbol(check_equals_symbol, ReplacementCheckEquals())\n\nsimulation = project.factory.simgr(initial_state)\nsimulation.explore(find=is_successful, avoid=should_abort)\n# ... retrieve solution for 'user_input' BVS",
+                      "hint": "`project.hook_symbol()` targets the function by its global name, replacing all its calls. This is efficient when a problematic function is called many times.",
+                      "source": "CTF_copy.pdf [page 78]",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "A23",
+          "name": "Assessment Guide: Solving 10_angr_simprocedures",
+          "label": "Assessment 23",
+          "linked_challenges": [
+            "10_angr_simprocedures"
+          ],
+          "objectives": [
+            "Accurately identify the target function symbol and its parameters for `SimProcedure`",
+            "Implement a `SimProcedure` that correctly summarizes the target function's symbolic behavior",
+            "Use `project.hook_symbol()` to replace all calls to the problematic function."
+          ],
+          "question_prompts": [
+            {
+              "question": "If `check_equals_...` had a different calling convention (e.g., arguments in registers), how would you modify the `run` method signature and body of your `SimProcedure`?"
+            },
+            {
+              "question": "How does `objdump | egrep check_ | egrep call | wc -l` demonstrate the problem `SimProcedure` solves in this CTF?"
+            }
+          ],
+          "evaluation_criteria": [
+            "Correctly identifies `check_equals_symbol` (`check_equals_WQNDNKKWAWOLXBAC`) and its parameters",
+            "Provides a working Angr script with a correct `SimProcedure` that solves the challenge efficiently",
+            "The `SimProcedure` accurately models the target function's logic and returns the correct symbolic value."
+          ],
+          "bloom_level": "Evaluate",
+          "difficulty": "advanced",
+          "children": []
+        }
+      ]
+    }
+  ]
+}

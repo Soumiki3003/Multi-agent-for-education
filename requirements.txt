@@ -1,0 +1,14 @@
+Flask
+PyMuPDF
+python-pptx
+beautifulsoup4
+pytesseract
+pdf2image
+Pillow
+google-genai
+opencv-python
+langchain
+langchain-community
+langchain-core
+langchain-openai
+neo4j

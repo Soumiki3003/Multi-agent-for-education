@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Course Materials</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #F4F4F4;
+      font-family: 'Rubik', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .upload-card {
+      background: #005461;
+      color: #F4F4F4;
+      padding: 50px 60px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 500px;
+    }
+
+    .upload-card h2 {
+      color: #F4F4F4;
+      margin-bottom: 30px;
+      font-size: 26px;
+    }
+
+    .upload-card label {
+      display: block;
+      margin-top: 15px;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    .upload-card input[type="file"],
+    .upload-card input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: none;
+      background: #018790;
+      color: #F4F4F4;
+      font-size: 14px;
+    }
+
+    .upload-card input::placeholder {
+      color: #F4F4F4;
+    }
+
+    .upload-card button {
+      width: 100%;
+      background: #00B7B5;
+      color: #005461;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 30px;
+      margin-bottom: 30px;
+      font-size: 15px;
+    }
+
+    .upload-card form {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;   /* ensures everything lines up full-width */
+        gap: 5px;              /* adds consistent spacing */
+    }
+
+    .upload-card input,
+        .upload-card button {
+            width: 100%;
+            box-sizing: border-box;
+            display: block;
+        }
+
+
+    .upload-card button:hover {
+      background: #F4F4F4;
+      
+      transition: 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="upload-card">
+    <h2>Upload Course Materials</h2>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+      <label>Upload Files (.pdf):</label>
+      <input type="file" name="files" multiple accept=".pdf,.pptx,.jpg,.png"><br>
+
+      <label>HTML Link:</label>
+      <input type="text" name="html_link" placeholder="https://example.com"><br>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</body>
+</html>

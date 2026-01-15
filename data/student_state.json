@@ -1,0 +1,261 @@
+{
+  "students": [
+    {
+      "id": "student_001",
+      "trajectory": [
+        {
+          "timestamp": "2026-01-11T20:03:52.057341",
+          "student_id": "student_001",
+          "query": "Explain how to initialize angr project.",
+          "retrieved_nodes": [
+            "Angr Project Initialization",
+            "Solving CTF 00_angr_find (Basic Find Target)",
+            "Concretizing Symbolic Bitvectors",
+            "Manual Symbolic Injection into Registers",
+            "Fundamentals of Symbolic Values and Bitvectors"
+          ],
+          "scores": [
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "interaction_type": "concept_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T06:43:01.256210",
+          "student_id": "student_001",
+          "query": "how do i initialize angr project",
+          "retrieved_nodes": [
+            "Angr Project Initialization",
+            "Solving CTF 00_angr_find (Basic Find Target)",
+            "Concretizing Symbolic Bitvectors",
+            "Manual Symbolic Injection into Registers",
+            "Fundamentals of Symbolic Values and Bitvectors"
+          ],
+          "scores": [
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "interaction_type": "context_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T06:43:45.607063",
+          "student_id": "student_001",
+          "query": "whhat is symbolic execution",
+          "retrieved_nodes": [
+            "Understanding Symbolic Execution State Explosion",
+            "Manual Symbolic Injection into the Stack",
+            "Manual Symbolic Injection into Global Memory",
+            "Mitigating State Explosion with Constraints",
+            "Manual Symbolic Injection into Dynamic Memory (Heap)"
+          ],
+          "scores": [
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "interaction_type": "context_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T06:54:04.585054",
+          "student_id": "student_001",
+          "query": "what is heap",
+          "retrieved_nodes": [
+            "Manual Symbolic Injection into Dynamic Memory (Heap)",
+            "CTF Knowledge Graph (Root)",
+            "Manual Symbolic Injection into the Stack",
+            "Solving CTF 06_angr_symbolic_dynamic_memory",
+            "Manual Symbolic Injection into Global Memory"
+          ],
+          "scores": [
+            0.8055820465087891,
+            0.7670459747314453,
+            0.7610645294189453,
+            0.75439453125,
+            0.7427997589111328
+          ],
+          "interaction_type": "concept_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T06:55:19.774637",
+          "student_id": "student_001",
+          "query": "what is heap",
+          "retrieved_nodes": [
+            "Manual Symbolic Injection into Dynamic Memory (Heap)",
+            "CTF Knowledge Graph (Root)",
+            "Manual Symbolic Injection into the Stack",
+            "Solving CTF 06_angr_symbolic_dynamic_memory",
+            "Manual Symbolic Injection into Global Memory"
+          ],
+          "scores": [
+            0.8055820465087891,
+            0.7670459747314453,
+            0.7610645294189453,
+            0.75439453125,
+            0.7427997589111328
+          ],
+          "interaction_type": "concept_request",
+          "query_prompted": 2
+        },
+        {
+          "timestamp": "2026-01-12T07:01:30.330572",
+          "student_id": "student_001",
+          "query": "give me code for symbolic execution",
+          "retrieved_nodes": [
+            "Manual Symbolic Injection into the Stack",
+            "Manual Symbolic Injection into Global Memory",
+            "Mitigating State Explosion with Constraints",
+            "Understanding Symbolic Execution State Explosion",
+            "Manual Symbolic Injection into Registers"
+          ],
+          "scores": [
+            0.8670330047607422,
+            0.8623847961425781,
+            0.8601512908935547,
+            0.858184814453125,
+            0.8516864776611328
+          ],
+          "interaction_type": "code_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T07:03:56.538149",
+          "student_id": "student_001",
+          "query": "Show me the code to solve the 00_angr_find challenge in angr",
+          "retrieved_nodes": [
+            "Solving CTF 00_angr_find (Basic Find Target)",
+            "Solving CTF 02_angr_find_condition (Conditional Find/Avoid)",
+            "Find and Avoid Algorithm using `simgr.explore()`",
+            "Solving CTF 08_angr_constraints",
+            "Solving CTF 07_angr_symbolic_file"
+          ],
+          "scores": [
+            0.9279823303222656,
+            0.8923301696777344,
+            0.8765411376953125,
+            0.8705673217773438,
+            0.8699665069580078
+          ],
+          "interaction_type": "code_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T07:04:32.783108",
+          "student_id": "student_001",
+          "query": "show me how to solve 01_angr challenge",
+          "retrieved_nodes": [
+            "Solving CTF 00_angr_find (Basic Find Target)",
+            "Solving CTF 04_angr_symbolic_stack",
+            "Solving CTF 02_angr_find_condition (Conditional Find/Avoid)",
+            "Solving CTF 08_angr_constraints",
+            "Solving CTF 03_angr_symbolic_registers"
+          ],
+          "scores": [
+            0.8836345672607422,
+            0.8658657073974609,
+            0.86322021484375,
+            0.8618679046630859,
+            0.8606891632080078
+          ],
+          "interaction_type": "context_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T07:05:14.928690",
+          "student_id": "student_001",
+          "query": "How do I manually inject a symbolic value into a register using angr?",
+          "retrieved_nodes": [
+            "Manual Symbolic Injection into Registers",
+            "Solving CTF 03_angr_symbolic_registers",
+            "Manual Symbolic Injection via the File System",
+            "Manual Symbolic Injection into Global Memory",
+            "Manual Symbolic Injection into the Stack"
+          ],
+          "scores": [
+            0.9269676208496094,
+            0.8843021392822266,
+            0.8796138763427734,
+            0.8793468475341797,
+            0.8779869079589844
+          ],
+          "interaction_type": "context_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T07:06:56.484082",
+          "student_id": "student_001",
+          "query": "Give me the Python function to concretize a symbolic bitvector in angr.",
+          "retrieved_nodes": [
+            "Concretizing Symbolic Bitvectors",
+            "Fundamentals of Symbolic Values and Bitvectors",
+            "Manual Symbolic Injection into Registers",
+            "Find and Avoid Algorithm using `simgr.explore()`",
+            "Angr Project Initialization"
+          ],
+          "scores": [
+            0.922332763671875,
+            0.9021644592285156,
+            0.8618927001953125,
+            0.8494014739990234,
+            0.8481960296630859
+          ],
+          "interaction_type": "code_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T07:09:09.000080",
+          "student_id": "student_001",
+          "query": "How do I use angr\u2019s SimulationManager to find the success state?",
+          "retrieved_nodes": [
+            "Solving CTF 00_angr_find (Basic Find Target)",
+            "Find and Avoid Algorithm using `simgr.explore()`",
+            "Solving CTF 02_angr_find_condition (Conditional Find/Avoid)",
+            "Angr Project Initialization",
+            "Solving CTF 10_angr_simprocedures"
+          ],
+          "scores": [
+            0.8904151916503906,
+            0.8901710510253906,
+            0.8868999481201172,
+            0.8584957122802734,
+            0.8477344512939453
+          ],
+          "interaction_type": "context_request",
+          "query_prompted": 1
+        },
+        {
+          "timestamp": "2026-01-12T09:08:47.013157",
+          "student_id": "student_001",
+          "query": "what is heap",
+          "retrieved_nodes": [
+            "Manual Symbolic Injection into Dynamic Memory (Heap)",
+            "CTF Knowledge Graph (Root)",
+            "Manual Symbolic Injection into the Stack",
+            "Solving CTF 06_angr_symbolic_dynamic_memory",
+            "Manual Symbolic Injection into Global Memory"
+          ],
+          "scores": [
+            0.8055820465087891,
+            0.7670459747314453,
+            0.7610645294189453,
+            0.75439453125,
+            0.7427997589111328
+          ],
+          "interaction_type": "concept_request",
+          "query_prompted": 3
+        }
+      ]
+    }
+  ]
+}

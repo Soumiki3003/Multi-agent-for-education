@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Expandable CTF Knowledge Graph</title>
+<style>
+  body { background:#FCF9EA; color:#97A87A; font-family:sans-serif; overflow:hidden; }
+  .link { stroke:#5A7863; stroke-opacity:0.6; marker-end:url(#arrow); }
+  .edge-label { fill:#ccc; font-size:10px; pointer-events:none; text-anchor:middle; }
+  .node text { fill:#3B4953; font-size:12px; pointer-events:none; }
+
+  #meta-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100%;
+  background: #2c2c2c;
+  color: white;
+  box-shadow: -4px 0 8px rgba(0,0,0,0.4);
+  transition: right 0.3s ease-in-out;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  }
+  #meta-panel.open { right: 0; }
+  #meta-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;}
+  #meta-panel h3 { margin-top: 0; color: #6FA8DC; }
+
+  #node-controls {
+    position: fixed;
+    bottom: 15px;
+    left: 15px;
+    background: rgba(40,40,40,0.9);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    z-index: 30;
+  }
+  #node-controls button {
+    margin: 4px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  #add-node { background: #93C47D; color: black; }
+  #delete-node { background: #E06666; color: white; }
+
+  .edit-field {
+    width:100%; background:#555; color:white; border:none;
+    margin:3px 0; font-size:12px; padding:5px;
+  }
+  .save-btn {
+    margin-top:8px; padding:6px 10px; background:#6FA8DC;
+    border:none; border-radius:4px; color:black; font-weight:bold;
+    cursor:pointer; width:100%;
+  }
+
+  .popup {
+    position: fixed;
+    bottom: 70px;
+    left: 15px;
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 12px;
+    width: 260px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    color: white;
+    transform: translateY(150%);
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+    z-index: 50;
+  }
+  .popup.open {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .popup label {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+  .popup input, .popup select {
+    width: 100%;
+    margin-top: 3px;
+    padding: 4px;
+    background: #555;
+    border: none;
+    color: white;
+    border-radius: 4px;
+  }
+  .popup button {
+    margin-top: 10px;
+    width: 100%;
+    padding: 6px;
+    border: none;
+    border-radius: 4px;
+    background: #6FA8DC;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<svg width="1300" height="900"></svg>
+
+<div id="meta-panel"></div>
+<div id="node-controls">
+  <button id="add-node">+ Add Node</button>
+  <button id="delete-node">– Delete Node</button>
+</div>
+
+<div id="add-popup" class="popup">
+  <h4>Add Node</h4>
+  <label>Node Type</label>
+  <select id="add-type">
+    <option value="C">Concept</option>
+    <option value="P">Procedure</option>
+    <option value="A">Assessment</option>
+  </select>
+
+  <label>From (source node ID)</label>
+  <input type="text" id="add-from" placeholder="e.g., C01">
+
+  <label>To (target node name)</label>
+  <input type="text" id="add-to" placeholder="e.g., New Concept">
+
+  <button id="confirm-add">Add</button>
+</div>
+
+<div id="delete-popup" class="popup">
+  <h4>Delete Node</h4>
+  <label>Node Type</label>
+  <select id="delete-type">
+    <option value="C">Concept</option>
+    <option value="P">Procedure</option>
+    <option value="A">Assessment</option>
+  </select>
+
+  <label>Node Name</label>
+  <input type="text" id="delete-name" placeholder="e.g., Symbolic Execution">
+
+  <button id="confirm-delete">Delete</button>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+d3.json("/graph-root").then(function(root) {
+  const svg = d3.select("svg"), width=+svg.attr("width"), height=+svg.attr("height");
+  const color=d3.scaleOrdinal().domain(["C","P","A"]).range(["#FFD966","#6FA8DC","#93C47D"]);
+  const metaPanel=document.getElementById("meta-panel");
+
+  let nodes=[],links=[];
+  nodes.push(root);
+  if(root.children){
+    root.children.filter(d=>d.id && d.id.startsWith("C")).forEach(c=>{
+      nodes.push(c);
+      // ✅ only connect conceptual nodes to root
+      links.push({source:root.id,target:c.id,relation:"HAS_CONCEPT"});
+    });
+  }
+
+  const simulation=d3.forceSimulation(nodes)
+    .force("link",d3.forceLink(links).id(d=>d.id).distance(180).strength(1))
+    .force("charge",d3.forceManyBody().strength(-600))
+    .force("center",d3.forceCenter(width/2,height/2))
+    .force("collision",d3.forceCollide().radius(d=>d.id.startsWith("C")?45:30).strength(0.8))
+    .velocityDecay(0.8)
+    .alphaDecay(0.02);
+
+  svg.append("defs").append("marker")
+    .attr("id","arrow").attr("viewBox","0 -5 10 10")
+    .attr("refX",22).attr("refY",0)
+    .attr("markerWidth",6).attr("markerHeight",6)
+    .attr("orient","auto")
+    .append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#aaa");
+
+  const linkGroup=svg.append("g").attr("class","links");
+  const labelGroup=svg.append("g").attr("class","labels");
+  const nodeGroup=svg.append("g").attr("class","nodes");
+  let link=linkGroup.selectAll("line");
+  let edgeLabel=labelGroup.selectAll(".edge-label");
+  let node=nodeGroup.selectAll(".node");
+
+  function update(){
+    link=link.data(links,d=>`${d.source.id||d.source}-${d.target.id||d.target}`);
+    link.exit().remove();
+    const linkEnter=link.enter().append("line").attr("class","link").style("opacity",0);
+    link=linkEnter.merge(link);
+    linkEnter.transition().duration(1200).ease(d3.easeCubicOut).style("opacity",1);
+
+    edgeLabel=edgeLabel.data(links,d=>`${d.source.id||d.source}-${d.target.id||d.target}`);
+    edgeLabel.exit().remove();
+    const labelEnter=edgeLabel.enter().append("text").attr("class","edge-label")
+      .text(d=>d.relation||"").style("opacity",0);
+    edgeLabel=labelEnter.merge(edgeLabel);
+    labelEnter.transition().duration(1200).delay(600).ease(d3.easeCubicOut).style("opacity",1);
+
+    node=node.data(nodes,d=>d.id);
+    node.exit().remove();
+    const nodeEnter=node.enter().append("g").attr("class","node")
+      .call(d3.drag().on("start",dragstarted).on("drag",dragged).on("end",dragended));
+
+    nodeEnter.append("circle")
+      .attr("r",d=>d.id.startsWith("C")?25:d.id.startsWith("P")?15:10)
+      .attr("fill",d=>color(d.id[0]))
+      .style("opacity",0)
+      .on("click",function(event,d){
+        if(event.detail === 1){ 
+          setTimeout(()=>{ if(event.detail === 1) expandNode(event,d); },200);
+        }
+      })
+      .on("dblclick",function(event,d){ showMetadata(event,d); });
+
+    nodeEnter.append("text").attr("x",8).attr("y",4)
+      .text(d=>d.name||d.id).style("opacity",0);
+
+    node=nodeEnter.merge(node);
+    nodeEnter.select("circle").transition().duration(1500)
+      .delay((d,i)=>i*150).ease(d3.easeCubicOut).style("opacity",1);
+    nodeEnter.select("text").transition().duration(1500)
+      .delay((d,i)=>i*150+400).ease(d3.easeCubicOut).style("opacity",1);
+
+    simulation.nodes(nodes);
+    simulation.force("link").links(links);
+    simulation.alpha(0.3).restart();
+  }
+
+  // ✅ updated expandNode() to load children dynamically from Neo4j
+  function expandNode(event, d) {
+    event.stopPropagation();
+    if (d.expanded) return;
+    d.expanded = true;
+
+    fetch(`/expand-node/${d.id}`)
+      .then(res => res.json())
+      .then(children => {
+        if (!children || !children.length) return;
+
+        const newNodes = children.filter(child => !nodes.find(n => n.id === child.id));
+        newNodes.forEach(child => { child.x = d.x; child.y = d.y; });
+        nodes.push(...newNodes);
+
+        children.forEach(child => {
+          let relType = "HAS_CHILD";
+          if (child.id.startsWith("P")) relType = "PROCEDURAL_FOR";
+          else if (child.id.startsWith("A")) relType = "ASSESSES";
+          else if (child.id.startsWith("C")) relType = "HAS_CONCEPT";
+          links.push({ source: d.id, target: child.id, relation: relType });
+        });
+
+        d.children = children;
+        update();
+      });
+  }
+
+  // === Metadata side panel (persistent in memory) ===
+  function showMetadata(event,d){
+    event.stopPropagation();
+    metaPanel.innerHTML = `
+  <div id="meta-content">
+    <h3>${d.name||d.id}</h3>
+  </div>
+  <button class='add-attr-btn'>+ Add Attribute</button>
+  <button class='save-btn'>Save Changes</button>
+`;
+metaPanel.querySelector(".add-attr-btn").onclick = ()=>{
+  const key = prompt("Enter new attribute name (e.g., 'difficulty')");
+  if(!key) return;
+  const value = prompt(`Enter value for "${key}"`);
+  if(value === null) return;
+
+  // Add new input field dynamically
+  const metaContent = document.getElementById("meta-content");
+  metaContent.innerHTML += `<b>${key}:</b> <input class='edit-field' data-key='${key}' value="${value}"><br>`;
+
+  // Add to node data structure immediately
+  d[key] = value;
+};
+const metaContent = document.getElementById("meta-content");
+
+for (const [key, val] of Object.entries(d)) {
+  if (["id","name","children","x","y","vx","vy","fx","fy","index","expanded"].includes(key)) continue;
+  if (Array.isArray(val) && val.length && typeof val[0] === "object") {
+    metaContent.innerHTML += `<b>${key}:</b><br>`;
+    val.forEach((obj,i)=>{
+      Object.entries(obj).forEach(([subkey,subval])=>{
+        metaContent.innerHTML += `<input class='edit-field' data-key='${key}.${i}.${subkey}' value="${subval}"><br>`;
+      });
+    });
+  } else if (Array.isArray(val)) {
+    metaContent.innerHTML += `<b>${key}:</b> <input class='edit-field' data-key='${key}' value="${val.join(", ")}"><br>`;
+  } else {
+    metaContent.innerHTML += `<b>${key}:</b> <input class='edit-field' data-key='${key}' value="${val}"><br>`;
+  }
+}
+    metaPanel.classList.add("open");
+
+    metaPanel.querySelector(".save-btn").onclick = ()=>{
+        metaPanel.querySelectorAll(".edit-field").forEach(input=>{
+            const path=input.getAttribute("data-key").split(".");
+            let ref=d;
+            for(let i=0;i<path.length-1;i++){
+            ref = ref[path[i]];
+            }
+            ref[path[path.length-1]]=input.value;
+        });
+
+  // ✅ Send to backend (Neo4j update)
+        fetch("/update_node", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(d)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "updated") {
+            alert("✅ Node updated in Neo4j!");
+            } else {
+            alert("⚠️ Update failed: " + JSON.stringify(data));
+            }
+        })
+        .catch(err => alert("❌ Error saving node: " + err));
+};
+
+
+    document.body.onclick = (e)=>{
+      if(!metaPanel.contains(e.target)) metaPanel.classList.remove("open");
+    };
+  }
+
+  simulation.on("tick",()=>{
+    link.attr("x1",d=>d.source.x)
+        .attr("y1",d=>d.source.y)
+        .attr("x2",d=>d.target.x)
+        .attr("y2",d=>d.target.y);
+    edgeLabel.attr("x",d=>(d.source.x+d.target.x)/2)
+             .attr("y",d=>(d.source.y+d.target.y)/2);
+    node.attr("transform",d=>`translate(${d.x},${d.y})`);
+  });
+
+  function dragstarted(event){
+    if(!event.active)simulation.alphaTarget(0.3).restart();
+    event.subject.fx=event.subject.x; event.subject.fy=event.subject.y;
+  }
+  function dragged(event){event.subject.fx=event.x; event.subject.fy=event.y;}
+  function dragended(event){
+    if(!event.active)simulation.alphaTarget(0);
+    event.subject.fx=null; event.subject.fy=null;
+  }
+
+  const addPopup = document.getElementById("add-popup");
+  const deletePopup = document.getElementById("delete-popup");
+
+  document.getElementById("add-node").onclick = (e) => {
+    e.stopPropagation();
+    deletePopup.classList.remove("open");
+    addPopup.classList.toggle("open");
+  };
+  document.getElementById("delete-node").onclick = (e) => {
+    e.stopPropagation();
+    addPopup.classList.remove("open");
+    deletePopup.classList.toggle("open");
+  };
+
+  document.addEventListener("click", (e) => {
+    if (!addPopup.contains(e.target) && !deletePopup.contains(e.target) &&
+        !e.target.matches("#add-node") && !e.target.matches("#delete-node")) {
+      addPopup.classList.remove("open");
+      deletePopup.classList.remove("open");
+    }
+  });
+
+  document.getElementById("confirm-add").onclick = () => {
+    const type = document.getElementById("add-type").value;
+    const from = document.getElementById("add-from").value.trim();
+    const to = document.getElementById("add-to").value.trim();
+    if (!from || !to) return alert("Please fill all fields.");
+    alert(`(Simulated) Added new ${type} node "${to}" from "${from}".`);
+    addPopup.classList.remove("open");
+  };
+
+  document.getElementById("confirm-delete").onclick = () => {
+    const type = document.getElementById("delete-type").value;
+    const name = document.getElementById("delete-name").value.trim();
+    if (!name) return alert("Please enter a node name.");
+    alert(`(Simulated) Deleted ${type} node "${name}".`);
+    deletePopup.classList.remove("open");
+  };
+
+  update();
+});
+</script>
+</body>
+</html>
